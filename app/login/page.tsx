@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/password-input"; // Adjust import path as needed
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -54,10 +55,11 @@ export default function LoginPage() {
                           Forgot password?
                         </a>
                       </div>
-                      <Input
+
+                      {/* Integrated Lucide Toggle Component */}
+                      <PasswordInput
                         id="login-password"
                         name="password"
-                        type="password"
                         placeholder="••••••••"
                         autoComplete="current-password"
                         required
@@ -112,6 +114,7 @@ export default function LoginPage() {
                 Continue with Google
               </Button>
             </form>
+
             <div className="mt-4 text-center text-sm text-muted-foreground">
               Don't have an account?{" "}
               <Link

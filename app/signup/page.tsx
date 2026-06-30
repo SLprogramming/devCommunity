@@ -1,3 +1,4 @@
+import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
@@ -64,10 +65,9 @@ export default function SignUpPage() {
                       <FieldLabel htmlFor="signup-password">
                         Password
                       </FieldLabel>
-                      <Input
+                      <PasswordInput
                         id="signup-password"
                         name="password"
-                        type="password"
                         placeholder="••••••••"
                         autoComplete="new-password"
                         required
@@ -79,10 +79,9 @@ export default function SignUpPage() {
                       <FieldLabel htmlFor="signup-confirm-password">
                         Confirm Password
                       </FieldLabel>
-                      <Input
+                      <PasswordInput
                         id="signup-confirm-password"
                         name="confirmPassword"
-                        type="password"
                         placeholder="••••••••"
                         autoComplete="new-password"
                         required
