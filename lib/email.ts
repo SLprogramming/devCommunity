@@ -12,7 +12,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
   try {
     const data = await resend.emails.send({
       from: "onboarding@resend.dev",
-      to,
+      to: "slprogramming.dev@gmail.com",
       subject,
       html,
     });

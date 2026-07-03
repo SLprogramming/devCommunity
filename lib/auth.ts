@@ -3,12 +3,30 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/lib/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { emailOTP } from "better-auth/plugins";
+import { sendEmail } from "./email";
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url, token }, request) => {
+      // Implement your email sending logic here
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your email",
+        html: `<p>Please verify your email by clicking the following link: <a href="${url}">${url}</a></p>`,
+      });
+      console.log(
+        `Send verification email to ${user.email} with token: ${token}`,
+      );
+    },
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    expireIn: 60 * 60, // 1 hour in seconds
+  },
+
   user: {
     additionalFields: {
       role: {
