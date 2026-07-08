@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { useActionState } from "react";
 import { signUpAction, type initialState } from "@/feature/auth/actions";
 import { FieldError } from "@/components/ui/field";
+import Link from "next/link";
+import { signIn } from "@/lib/auth-client";
 
 export default function SignupForm() {
   const initialState: initialState = {
@@ -25,6 +27,7 @@ export default function SignupForm() {
       email: "",
     },
   };
+  const [isSocialLoginPending, setIsSocialLoginPending] = React.useState(false);
   const [state, formAction, isPending] = useActionState(
     signUpAction,
     initialState,
@@ -36,7 +39,14 @@ export default function SignupForm() {
     password: false,
     comfirmPassword: false,
   });
-
+  const handleSocialLogin = async (provider: "github" | "google") => {
+    setIsSocialLoginPending(true);
+    await signIn.social({
+      provider,
+      callbackURL: "/",
+    });
+    setIsSocialLoginPending(false);
+  };
   return (
     <div className="relative w-full max-w-md mx-auto group">
       {/* Dynamic background glow that adapts to light/dark modes */}
@@ -193,27 +203,28 @@ export default function SignupForm() {
           <Button
             variant="outline"
             type="button"
-            disabled={isPending}
+            onClick={() => handleSocialLogin("google")}
+            disabled={isSocialLoginPending}
             className="w-full bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground transition-colors rounded-lg"
           >
-            {isPending ? (
+            {isSocialLoginPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <GitBranch className="mr-2 h-4 w-4" />
             )}
-            GitHub
+            Google
           </Button>
         </CardContent>
 
         <CardFooter className="px-6 pb-6 pt-0 flex justify-center">
           <p className="text-xs text-muted-foreground">
             Already have an account?{" "}
-            <a
+            <Link
               href="/login"
               className="text-foreground font-medium hover:underline underline-offset-4 transition-all"
             >
               Sign in
-            </a>
+            </Link>
           </p>
         </CardFooter>
       </Card>

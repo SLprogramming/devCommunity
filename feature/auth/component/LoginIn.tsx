@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Eye, EyeOff, GitBranch } from "lucide-react";
+import { Eye, EyeOff, GitBranch, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,7 +13,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { type initialState, signInAction } from "../actions";
+import { signIn } from "@/lib/auth-client";
 import { useActionState } from "react";
+import Link from "next/link";
 
 export default function LoginForm() {
   const initialState: initialState = {
@@ -23,12 +25,20 @@ export default function LoginForm() {
       email: "",
     },
   };
+  const [isSocialLoginPending, setIsSocialLoginPending] = React.useState(false);
   const [state, formAction, isPending] = useActionState(
     signInAction,
     initialState,
   );
   const [showPassword, setShowPassword] = React.useState(false);
-
+  const handleSocialLogin = async (provider: "github" | "google") => {
+    setIsSocialLoginPending(true);
+    await signIn.social({
+      provider,
+      callbackURL: "/",
+    });
+    setIsSocialLoginPending(false);
+  };
   return (
     <div className="relative w-full max-w-md mx-auto group">
       {/* Dynamic background glow */}
@@ -104,8 +114,10 @@ export default function LoginForm() {
             {/* Submit Button */}
             <Button
               type="submit"
+              disabled={isPending}
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium rounded-lg mt-2"
             >
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign In
             </Button>
           </form>
@@ -123,10 +135,16 @@ export default function LoginForm() {
           <Button
             variant="outline"
             type="button"
+            disabled={isSocialLoginPending}
+            onClick={() => handleSocialLogin("google")}
             className="w-full bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground transition-colors rounded-lg"
           >
-            <GitBranch className="mr-2 h-4 w-4" />
-            GitHub
+            {isSocialLoginPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <GitBranch className="mr-2 h-4 w-4" />
+            )}
+            Google
           </Button>
         </CardContent>
 
@@ -134,12 +152,12 @@ export default function LoginForm() {
         <CardFooter className="px-6 pb-6 pt-0 flex justify-center">
           <p className="text-xs text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <a
+            <Link
               href="/signup"
               className="text-foreground font-medium hover:underline underline-offset-4 transition-all"
             >
               Sign up
-            </a>
+            </Link>
           </p>
         </CardFooter>
       </Card>
