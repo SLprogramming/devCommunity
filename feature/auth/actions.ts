@@ -1,8 +1,12 @@
 "use server";
-import z from "zod";
+import z, { email, success } from "zod";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { prisma } from "@/lib/prisma";
+import { ApiError } from "next/dist/server/api-utils";
+import { Password } from "@hugeicons/core-free-icons";
+import { timeStamp } from "console";
 export type initialState = {
   message: string;
   success: boolean;
@@ -11,10 +15,16 @@ export type initialState = {
     email?: string[];
     password?: string[];
     confirmPassword?: string[];
+    otp?: string[];
   };
   fields?: {
     username?: string;
     email?: string;
+  };
+  toast?: {
+    message?: string;
+    type?: "success" | "info" | "warning" | "error";
+    timestamp?: number;
   };
 };
 
@@ -105,7 +115,7 @@ export const signUpAction = async (
 export const signInAction = async (
   prevState: initialState,
   formData: FormData,
-) => {
+): Promise<initialState> => {
   const FormEmail = formData.get("email");
   const FormPassword = formData.get("password");
 
@@ -133,16 +143,16 @@ export const signInAction = async (
       fields: {
         email: FormEmail?.toString(),
       },
-    } as initialState;
+      toast: {
+        message: "validation failed",
+        timestamp: Date.now(),
+        type: "error",
+      },
+    };
   }
-  console.log(
-    "from signin action:",
-    parseData.data.email,
-    parseData.data.password,
-  );
+
   try {
     let { email, password } = parseData.data;
-    console.log("from signin action:", email, password);
     let res = await auth.api.signInEmail({
       body: {
         email,
@@ -150,11 +160,15 @@ export const signInAction = async (
       },
       asResponse: true,
     });
-    console.log(res);
     if (!res.ok) {
       return {
         message: "Sign-in failed",
         success: false,
+        toast: {
+          message: "sign in failed",
+          type: "error",
+          timestamp: Date.now(),
+        },
       };
     }
   } catch (error) {
@@ -162,8 +176,14 @@ export const signInAction = async (
     return {
       message: "An error occurred during sign-in",
       success: false,
+      toast: {
+        message: "sign in failed",
+        type: "error",
+        timestamp: Date.now(),
+      },
     };
   }
+
   redirect("/");
 };
 
@@ -184,6 +204,129 @@ export const signOutAction = async () => {
     console.error("Error during sign-out:", error);
     return {
       message: "An error occurred during sign-out",
+      success: false,
+    };
+  }
+  redirect("/login");
+};
+
+export const forgotPasswordAction = async (
+  prevState: initialState,
+  formData: FormData,
+): Promise<initialState> => {
+  const FormEmail = formData.get("email");
+
+  const formSchema = z.object({
+    email: z.string().email({
+      message: "invalid email address",
+    }),
+  });
+
+  let parseData = formSchema.safeParse({
+    email: FormEmail,
+  });
+
+  if (parseData.error) {
+    let errors = z.flattenError(parseData.error);
+    console.log(errors.fieldErrors);
+    return {
+      message: "Validation failed",
+      success: false,
+      errors: errors.fieldErrors,
+      fields: {
+        email: FormEmail?.toString(),
+      },
+    };
+  }
+  let { email } = parseData.data;
+  try {
+    const userExist = await prisma.user.findUnique({
+      where: { email },
+    });
+    if (!userExist) {
+      return {
+        message: "user with this email doesn't exist",
+        success: false,
+        errors: {
+          email: ["user with this email doesn't exist "],
+        },
+      };
+    }
+    let res = await auth.api.sendVerificationOTP({
+      body: {
+        email,
+        type: "forget-password",
+      },
+      asResponse: true,
+    });
+    console.log("reset password response:", res);
+  } catch (error) {
+    console.error("Error during forgot password:", error);
+    return {
+      message: "An error occurred during forgot password",
+      success: false,
+    };
+  }
+  redirect(`/verify-otp?email=${email}`);
+};
+
+export const resetPasswordAction = async (
+  prevState: initialState,
+  formData: FormData,
+) => {
+  const FormEmail = formData.get("email");
+  const FormOtp = formData.get("otp");
+  const FormPassword = formData.get("password");
+  const FormConfirmPassword = formData.get("confirmPassword");
+  const formSchema = z
+    .object({
+      otp: z.string(),
+      email: z.string().email({
+        message: "invalid Email address",
+      }),
+      password: z
+        .string()
+        .min(6, { message: "password must be at least 6 characters" }),
+      confirmPassword: z
+        .string()
+        .min(6, { message: "confirm password be at least 6 characters" }),
+    })
+    .refine((data) => data.confirmPassword == data.password, {
+      message: "passwords doesn't match",
+      path: ["confirmPassword"],
+    });
+  const parseData = formSchema.safeParse({
+    otp: FormOtp,
+    email: FormEmail,
+    password: FormPassword,
+    confirmPassword: FormConfirmPassword,
+  });
+
+  if (!parseData.success) {
+    let errors = z.flattenError(parseData.error);
+    return {
+      message: "validation failed",
+      success: false,
+      errors: errors.fieldErrors,
+    };
+  }
+  let { email, password, otp } = parseData.data;
+  try {
+    let res = await auth.api.resetPasswordEmailOTP({
+      body: {
+        email,
+        otp,
+        password,
+      },
+    });
+    console.log("reset password res", res);
+    return {
+      message: "password changed successfully",
+      success: true,
+    };
+  } catch (error) {
+    return {
+      message: "failed on reset password",
       success: false,
     };
   }
