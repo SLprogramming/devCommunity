@@ -16,8 +16,7 @@ import { type initialState, signInAction } from "../actions";
 import { signIn } from "@/lib/auth-client";
 import { useActionState } from "react";
 import Link from "next/link";
-import { toast } from "sonner";
-
+import { useActionToast } from "@/hooks/use-action-toast";
 export default function LoginForm() {
   const initialState: initialState = {
     message: "",
@@ -46,14 +45,15 @@ export default function LoginForm() {
     setIsSocialLoginPending(false);
   };
 
+  useActionToast(state);
+
   React.useEffect(() => {
-    if (state?.toast?.type && state?.toast?.message) {
-      toast[state?.toast?.type](state?.toast?.message);
-    }
-    if (!state?.toast?.type) {
-      toast(state?.toast?.message);
-    }
-  }, [state?.toast?.timestamp]);
+    return () => {
+      React.startTransition(() => {
+        formAction({ type: "RESET" });
+      });
+    };
+  }, [formAction]);
   return (
     <div className="relative w-full max-w-md mx-auto group">
       {/* Dynamic background glow */}

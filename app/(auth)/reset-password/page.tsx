@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useActionState } from "react";
-import { Loader2, Eye, EyeOff, Lock } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { useSearchParams } from "next/navigation";
 import { resetPasswordAction, type initialState } from "@/feature/auth/actions";
 import { FieldError } from "@/components/ui/field";
-
+import { useActionToast } from "@/hooks/use-action-toast";
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
@@ -31,6 +31,14 @@ export default function ResetPasswordPage() {
     initialState,
   );
 
+  useActionToast(state);
+  React.useEffect(() => {
+    return () => {
+      React.startTransition(() => {
+        formAction({ type: "RESET" });
+      });
+    };
+  }, [formAction]);
   return (
     <div className="relative w-full max-w-md mx-auto mt-[100px] group">
       <div className="absolute -inset-0.5 bg-gradient-to-r from-muted via-border to-muted rounded-2xl opacity-30 blur-sm group-hover:opacity-70 transition duration-1000" />

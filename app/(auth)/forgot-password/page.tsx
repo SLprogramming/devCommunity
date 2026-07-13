@@ -15,16 +15,21 @@ import {
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { forgotPasswordAction } from "@/feature/auth/actions";
-import { FieldError } from "@/components/ui/field";
+import { useActionToast } from "@/hooks/use-action-toast";
 
 export default function ForgotPasswordPage() {
-  // Mock action structure matching your style
-
-  const [state, formAction, isPending] = useActionState(
-    forgotPasswordAction, // Replace with your real server action
-    { success: false, message: "" },
-  );
-
+  const [state, formAction, isPending] = useActionState(forgotPasswordAction, {
+    success: false,
+    message: "",
+  });
+  useActionToast(state);
+  React.useEffect(() => {
+    return () => {
+      React.startTransition(() => {
+        formAction({ type: "RESET" });
+      });
+    };
+  }, [formAction]);
   return (
     <div className="relative w-full max-w-md mx-auto mt-[100px] group">
       {/* Dynamic background glow matching Login */}

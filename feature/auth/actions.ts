@@ -1,12 +1,12 @@
 "use server";
-import z, { email, success } from "zod";
+import z from "zod";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { ApiError } from "next/dist/server/api-utils";
-import { Password } from "@hugeicons/core-free-icons";
-import { timeStamp } from "console";
+import { isAPIError } from "better-auth/api";
+import { ToastType } from "@/hooks/use-action-toast";
+
 export type initialState = {
   message: string;
   success: boolean;
@@ -21,17 +21,22 @@ export type initialState = {
     username?: string;
     email?: string;
   };
-  toast?: {
-    message?: string;
-    type?: "success" | "info" | "warning" | "error";
-    timestamp?: number;
-  };
+  toast?: ToastType;
+  redirectTo?: string;
 };
 
 export const signUpAction = async (
   prevState: initialState,
-  formData: FormData,
-) => {
+  payload: FormData | { type: "RESET" },
+): Promise<initialState> => {
+  if (!(payload instanceof FormData) && payload?.type === "RESET") {
+    return {
+      success: false,
+      message: "",
+      toast: undefined, // Completely clear the stale toast data
+    };
+  }
+  const formData = payload as FormData;
   const FormUserName = formData.get("username");
   const FormEmail = formData.get("email");
   const FormPassword = formData.get("password");
@@ -78,44 +83,57 @@ export const signUpAction = async (
         username: FormUserName?.toString(),
         email: FormEmail?.toString(),
       },
+      toast: {
+        message: "Validation failed",
+        type: "error",
+        timestamp: Date.now(),
+      },
     };
   }
   try {
     let { username, email, password, confirmPassword } = parseData.data;
-    let res = await auth.api.signUpEmail({
+    await auth.api.signUpEmail({
       body: {
         name: username,
         email,
         password,
       },
-      asResponse: true,
     });
-    console.log(res);
 
-    console.log(
-      "from signup action:",
-      username,
-      email,
-      password,
-      confirmPassword,
-    );
     return {
-      message: "please check your email for verification",
+      message: "Sign up success",
       success: true,
+      toast: {
+        message: "please check your email for verification",
+        type: "success",
+        timestamp: Date.now(),
+      },
     };
   } catch (error) {
-    console.error("Error during sign-up:", error);
     return {
       message: "An error occurred during sign-up",
       success: false,
+      toast: {
+        message: isAPIError(error) ? error?.body?.message : "Sign up failed",
+        type: "error",
+        timestamp: Date.now(),
+      },
     };
   }
 };
 
 export const signInAction = async (
   prevState: initialState,
-  formData: FormData,
+  payload: FormData | { type: "RESET" },
 ): Promise<initialState> => {
+  if (!(payload instanceof FormData) && payload?.type === "RESET") {
+    return {
+      success: false,
+      message: "",
+      toast: undefined, // Completely clear the stale toast data
+    };
+  }
+  const formData = payload as FormData;
   const FormEmail = formData.get("email");
   const FormPassword = formData.get("password");
 
@@ -153,38 +171,34 @@ export const signInAction = async (
 
   try {
     let { email, password } = parseData.data;
-    let res = await auth.api.signInEmail({
+    await auth.api.signInEmail({
       body: {
         email,
         password,
       },
-      asResponse: true,
     });
-    if (!res.ok) {
-      return {
-        message: "Sign-in failed",
-        success: false,
-        toast: {
-          message: "sign in failed",
-          type: "error",
-          timestamp: Date.now(),
-        },
-      };
-    }
+
+    return {
+      message: "Signin Success",
+      success: true,
+      redirectTo: "/",
+      toast: {
+        message: "Login Success",
+        type: "success",
+        timestamp: Date.now(),
+      },
+    };
   } catch (error) {
-    console.error("Error during sign-in:", error);
     return {
       message: "An error occurred during sign-in",
       success: false,
       toast: {
-        message: "sign in failed",
+        message: isAPIError(error) ? error?.body?.message : "sign in failed",
         type: "error",
         timestamp: Date.now(),
       },
     };
   }
-
-  redirect("/");
 };
 
 export const signOutAction = async () => {
@@ -212,8 +226,16 @@ export const signOutAction = async () => {
 
 export const forgotPasswordAction = async (
   prevState: initialState,
-  formData: FormData,
+  payload: FormData | { type: "RESET" },
 ): Promise<initialState> => {
+  if (!(payload instanceof FormData) && payload?.type === "RESET") {
+    return {
+      success: false,
+      message: "",
+      toast: undefined, // Completely clear the stale toast data
+    };
+  }
+  const formData = payload as FormData;
   const FormEmail = formData.get("email");
 
   const formSchema = z.object({
@@ -236,6 +258,11 @@ export const forgotPasswordAction = async (
       fields: {
         email: FormEmail?.toString(),
       },
+      toast: {
+        message: "Validation failed",
+        type: "error",
+        timestamp: Date.now(),
+      },
     };
   }
   let { email } = parseData.data;
@@ -252,28 +279,50 @@ export const forgotPasswordAction = async (
         },
       };
     }
-    let res = await auth.api.sendVerificationOTP({
+    await auth.api.sendVerificationOTP({
       body: {
         email,
         type: "forget-password",
       },
-      asResponse: true,
     });
-    console.log("reset password response:", res);
+    return {
+      message: "otp sent successfully",
+      success: true,
+      redirectTo: `/verify-otp?email=${email}`,
+      toast: {
+        message: "OTP is sent to your email",
+        type: "success",
+        timestamp: Date.now(),
+      },
+    };
   } catch (error) {
     console.error("Error during forgot password:", error);
     return {
       message: "An error occurred during forgot password",
       success: false,
+      toast: {
+        message: isAPIError(error)
+          ? error?.body?.message
+          : "An error occurred in sending OTP",
+        type: "error",
+        timestamp: Date.now(),
+      },
     };
   }
-  redirect(`/verify-otp?email=${email}`);
 };
 
 export const resetPasswordAction = async (
   prevState: initialState,
-  formData: FormData,
-) => {
+  payload: FormData | { type: "RESET" },
+): Promise<initialState> => {
+  if (!(payload instanceof FormData) && payload?.type === "RESET") {
+    return {
+      success: false,
+      message: "",
+      toast: undefined, // Completely clear the stale toast data
+    };
+  }
+  const formData = payload as FormData;
   const FormEmail = formData.get("email");
   const FormOtp = formData.get("otp");
   const FormPassword = formData.get("password");
@@ -312,23 +361,36 @@ export const resetPasswordAction = async (
   }
   let { email, password, otp } = parseData.data;
   try {
-    let res = await auth.api.resetPasswordEmailOTP({
+    await auth.api.resetPasswordEmailOTP({
       body: {
         email,
         otp,
         password,
       },
     });
-    console.log("reset password res", res);
+
     return {
       message: "password changed successfully",
       success: true,
+      redirectTo: "/login",
+      toast: {
+        message: "Password changed successfully",
+        type: "success",
+        timestamp: Date.now(),
+      },
     };
   } catch (error) {
+    console.log(error);
     return {
       message: "failed on reset password",
       success: false,
+      toast: {
+        message: isAPIError(error)
+          ? error?.body?.message
+          : "Failed on reset password",
+        type: "error",
+        timestamp: Date.now(),
+      },
     };
   }
-  redirect("/login");
 };

@@ -18,6 +18,8 @@ import { FieldError } from "@/components/ui/field";
 import Link from "next/link";
 import { signIn } from "@/lib/auth-client";
 
+import { useActionToast } from "@/hooks/use-action-toast";
+
 export default function SignupForm() {
   const initialState: initialState = {
     message: "",
@@ -26,7 +28,13 @@ export default function SignupForm() {
       username: "",
       email: "",
     },
+    toast: {
+      message: "",
+      type: "info",
+      timestamp: 0,
+    },
   };
+
   const [isSocialLoginPending, setIsSocialLoginPending] = React.useState(false);
   const [state, formAction, isPending] = useActionState(
     signUpAction,
@@ -47,6 +55,14 @@ export default function SignupForm() {
     });
     setIsSocialLoginPending(false);
   };
+  useActionToast(state);
+  React.useEffect(() => {
+    return () => {
+      React.startTransition(() => {
+        formAction({ type: "RESET" });
+      });
+    };
+  }, [formAction]);
   return (
     <div className="relative w-full max-w-md mx-auto group">
       {/* Dynamic background glow that adapts to light/dark modes */}

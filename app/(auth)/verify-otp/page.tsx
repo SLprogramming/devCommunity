@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useActionState } from "react";
-import { Loader2, KeyRound, ArrowLeft } from "lucide-react";
+
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,9 +12,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { emailOtp } from "@/lib/auth-client";
+import { toast } from "sonner";
 export default function VerifyOtpPage() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
@@ -32,9 +32,11 @@ export default function VerifyOtpPage() {
         type: "forget-password",
       });
       if (res?.data?.success) {
+        toast.success("OTP verification success");
         router.push(`/reset-password?email=${email}&otp=${otp}`);
+      } else {
+        toast.error(res?.error?.message || "OTP verification failed");
       }
-      console.log("verification otp res:", res);
     } catch (error) {
       console.log("error on verification");
     } finally {
@@ -42,9 +44,25 @@ export default function VerifyOtpPage() {
     }
   };
 
+  const hadleResendOTP = async () => {
+    try {
+      let res = await emailOtp.sendVerificationOtp({
+        email,
+        type: "forget-password",
+      });
+      if (res?.data?.success) {
+        toast.success("OTP resent to your email");
+      } else {
+        toast.error("Failed on sending OTP");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="relative w-full max-w-md mx-auto mt-[100px] group">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-muted via-border to-muted rounded-2xl opacity-30 blur-sm group-hover:opacity-70 transition duration-1000" />
+      <div className="absolute -inset-0.5 bg-linear-to-r from-muted via-border to-muted rounded-2xl opacity-30 blur-sm group-hover:opacity-70 transition duration-1000" />
 
       <Card className="relative bg-card border-border text-card-foreground shadow-2xl rounded-2xl">
         <CardHeader className="space-y-1.5 pt-6 px-6">
@@ -76,7 +94,10 @@ export default function VerifyOtpPage() {
           </form>
 
           <div className="text-center pt-2">
-            <button className="text-xs text-muted-foreground hover:text-foreground hover:underline">
+            <button
+              onClick={hadleResendOTP}
+              className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+            >
               Didn't receive a code? Resend
             </button>
           </div>
