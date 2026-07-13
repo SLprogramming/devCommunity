@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import AuthGuard from "./authGuard";
+
 export default async function AuthLayout({
   children,
 }: Readonly<{
@@ -8,7 +8,7 @@ export default async function AuthLayout({
   return (
     <div>
       <Suspense fallback={<div>Loading...</div>}>
-        <AuthGuard>{children}</AuthGuard>
+        {children}
       </Suspense>
     </div>
   );

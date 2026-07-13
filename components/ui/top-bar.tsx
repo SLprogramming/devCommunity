@@ -1,4 +1,4 @@
-import React from "react";
+
 import Link from "next/link";
 import { Search, Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,17 +13,111 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { signOut } from "@/lib/auth-client";
-// import { useRouter } from "next/navigation";
-export function TopBar() {
-  // const router = useRouter();
-  // const handleLogout = async () => {
-  //   let res = await signOut();
-  //   console.log(res);
-  //   if (res.data?.success) {
-  //     router.push("/login");
-  //   }
-  // };
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { Suspense } from "react";
+import {signOutAction} from "@/feature/auth/actions"
+async function UserProfile() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
+
+
+  return (
+    <>
+    {session ? (  
+      <>   <Button
+            variant="ghost"
+            size="icon"
+            className="relative text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9 rounded-full"
+          >
+            <Bell className="h-5 w-5" />
+            {/* Notification Badge Indicator */}
+            <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />
+          </Button>
+           <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="relative h-8 w-8 rounded-full ring-offset-background focus-visible:ring-1 focus-visible:ring-border"
+              >
+                <Avatar className="h-8 w-8 border border-border">
+                  <AvatarImage
+                    src="https://github.com/adshadcn.png"
+                    alt="User avatar"
+                  />
+                  <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                    {session?.user?.name?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              className="w-56 mt-2 bg-popover/95 backdrop-blur-md border-border text-popover-foreground"
+              align="end"
+              forceMount
+            >
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none text-foreground">
+                    {session?.user?.name || "User Name"}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {session?.user?.email || "user@example.com"}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-border" />
+              <Link href={"/profile"}>
+                <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground cursor-pointer">
+                  Profile
+                </DropdownMenuItem>
+              </Link>
+              <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground cursor-pointer">
+                Writing Space
+              </DropdownMenuItem>
+              <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground cursor-pointer">
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-border" />
+              <form action={signOutAction}>
+         
+              <DropdownMenuItem asChild className="focus:bg-destructive/10 focus:text-destructive text-destructive cursor-pointer">
+           <button type="submit" className="w-full text-left">
+
+                Sign out
+           </button>
+             
+              </DropdownMenuItem>
+              
+              </form>
+            </DropdownMenuContent>
+          </DropdownMenu>
+      </>
+          ) : (
+            <Button asChild>
+              <Link href="/login">Login</Link>
+            </Button>
+          )}
+ 
+    </>
+  )
+}
+function UserProfileSkeleton() {
+  return (
+    <div className="flex items-center gap-3 animate-pulse">
+      {/* Mimics the Notification Bell Button */}
+      <div className="h-9 w-9 rounded-full bg-muted/60" />
+      
+      {/* Mimics the User Profile Avatar Button */}
+      <div className="h-8 w-8 rounded-full bg-muted" />
+    </div>
+  );
+}
+export async function TopBar() {
+// Debugging line to check session value
+ 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/75 backdrop-blur-md transition-all">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -90,70 +184,20 @@ export function TopBar() {
           <ThemeToggle />
 
           {/* Notifications Bell */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9 rounded-full"
-          >
-            <Bell className="h-5 w-5" />
-            {/* Notification Badge Indicator */}
-            <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />
-          </Button>
+        
 
           {/* User Profile Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="relative h-8 w-8 rounded-full ring-offset-background focus-visible:ring-1 focus-visible:ring-border"
-              >
-                <Avatar className="h-8 w-8 border border-border">
-                  <AvatarImage
-                    src="https://github.com/adshadcn.png"
-                    alt="User avatar"
-                  />
-                  <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                    TL
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
+          
+          <Suspense fallback={<UserProfileSkeleton />}>
+           <UserProfile/>
+          </Suspense>
 
-            <DropdownMenuContent
-              className="w-56 mt-2 bg-popover/95 backdrop-blur-md border-border text-popover-foreground"
-              align="end"
-              forceMount
-            >
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none text-foreground">
-                    Taing Linn Maung
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    @slprogramming
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-border" />
-              <Link href={"/profile"}>
-                <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground cursor-pointer">
-                  Profile
-                </DropdownMenuItem>
-              </Link>
-              <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground cursor-pointer">
-                Writing Space
-              </DropdownMenuItem>
-              <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground cursor-pointer">
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-border" />
-              <DropdownMenuItem className="focus:bg-destructive/10 focus:text-destructive text-destructive cursor-pointer">
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          
+          
         </div>
       </div>
     </header>
   );
 }
+
+

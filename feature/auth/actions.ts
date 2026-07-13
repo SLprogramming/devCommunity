@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { isAPIError } from "better-auth/api";
 import { ToastType } from "@/hooks/use-action-toast";
+import { revalidatePath } from "next/cache";
 
 export type initialState = {
   message: string;
@@ -202,26 +203,31 @@ export const signInAction = async (
 };
 
 export const signOutAction = async () => {
+  let isSuccess = false;
+
   try {
-    let res = await auth.api.signOut({
+    const res = await auth.api.signOut({
       headers: await headers(),
       asResponse: true,
     });
+    
     console.log("logout response:", res);
-    if (!res.ok) {
-      return {
-        message: "Sign-out failed",
-        success: false,
-      };
+    
+    if (res && res.ok) {
+      isSuccess = true;
     }
   } catch (error) {
     console.error("Error during sign-out:", error);
-    return {
-      message: "An error occurred during sign-out",
-      success: false,
-    };
+    // Do not handle redirects here, let the execution pass through
   }
-  redirect("/login");
+
+  if (isSuccess) {
+    // 1. Force Next.js to purge the server-side layout cache for your TopBar
+    revalidatePath("/"); 
+    
+    // 2. Safely redirect the user outside the try/catch block
+    // redirect("/login");
+  }
 };
 
 export const forgotPasswordAction = async (
