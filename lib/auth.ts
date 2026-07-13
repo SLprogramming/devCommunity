@@ -38,6 +38,16 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
+    sendResetPassword: async ({ user, url, token }, request) => {
+      console.log(
+        `Send password reset email to ${user.email} with token: ${token}`,
+      );
+      await sendEmail({
+        to: user.email,
+        subject: "Reset your password",
+        html: `<p>Click <a href="${url}">here</a> to reset your password. Link expires soon.</p>`,
+      });
+    },
   },
 
   socialProviders: {
@@ -50,14 +60,38 @@ export const auth = betterAuth({
   plugins: [
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
+        console.log(`email sending ${otp} to ${email}`);
         if (type === "sign-in") {
           // Send the OTP for sign in
         } else if (type === "email-verification") {
           // Send the OTP for email verification
-        } else {
+        } else if (type === "forget-password") {
           // Send the OTP for password reset
+          await sendEmail({
+            to: email,
+            subject: "Your Password Reset OTP",
+            html: `
+    <div style="font-family: ui-sans-serif, system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e4e4e7; border-radius: 12px; background-color: #ffffff; color: #18181b;">
+      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #09090b;">Reset your password</h2>
+      <p style="font-size: 14px; color: #71717a; line-height: 1.5; margin-bottom: 24px;">
+        We received a request to reset your developer account password. Use the verification code below to proceed.
+      </p>
+      
+      <div style="text-align: center; margin: 24px 0;">
+        <div style="display: inline-block; font-family: monospace; font-size: 32px; font-weight: 700; letter-spacing: 4px; padding: 12px 24px; background-color: #f4f4f5; border: 1px solid #e4e4e7; border-radius: 8px; color: #18181b;">
+          ${otp}
+        </div>
+      </div>
+      
+      <p style="font-size: 12px; color: #a1a1aa; line-height: 1.5; margin-top: 24px; border-top: 1px solid #f4f4f5; pt: 16px;">
+        This code expires shortly. If you did not make this request, you can safely ignore this email.
+      </p>
+    </div>
+  `,
+          });
         }
       },
+      sendVerificationOnSignUp: false,
     }),
     nextCookies(),
   ],

@@ -16,13 +16,18 @@ import { type initialState, signInAction } from "../actions";
 import { signIn } from "@/lib/auth-client";
 import { useActionState } from "react";
 import Link from "next/link";
-
+import { useActionToast } from "@/hooks/use-action-toast";
 export default function LoginForm() {
   const initialState: initialState = {
     message: "",
     success: false,
     fields: {
       email: "",
+    },
+    toast: {
+      message: "",
+      type: "info",
+      timestamp: 0,
     },
   };
   const [isSocialLoginPending, setIsSocialLoginPending] = React.useState(false);
@@ -39,6 +44,16 @@ export default function LoginForm() {
     });
     setIsSocialLoginPending(false);
   };
+
+  useActionToast(state);
+
+  React.useEffect(() => {
+    return () => {
+      React.startTransition(() => {
+        formAction({ type: "RESET" });
+      });
+    };
+  }, [formAction]);
   return (
     <div className="relative w-full max-w-md mx-auto group">
       {/* Dynamic background glow */}
@@ -81,12 +96,12 @@ export default function LoginForm() {
                 <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Password
                 </label>
-                <a
+                <Link
                   href="/forgot-password"
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors hover:underline underline-offset-2"
                 >
                   Forgot password?
-                </a>
+                </Link>
               </div>
               <div className="relative">
                 <Input
