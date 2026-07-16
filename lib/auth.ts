@@ -10,6 +10,21 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  databaseHooks:{
+      user:{
+        create:{
+          after: async (user)=>{
+            console.log(`User created: ${user.email}`);
+            await prisma.profile.create({
+              data:{
+                userId: user.id,
+                
+              }
+            })
+          }
+        }
+      }
+  },
   emailVerification: {
     sendVerificationEmail: async ({ user, url, token }, request) => {
       // Implement your email sending logic here

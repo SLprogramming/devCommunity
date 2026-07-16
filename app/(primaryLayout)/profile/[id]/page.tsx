@@ -20,27 +20,33 @@ import { createProfileAction } from "@/feature/profile/actions";
 import Image from "next/image";
 import Link from "next/link";
 
+interface PageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
 
-export default async function DevUserProfile({}) {
+export default async function DevUserProfile({params}:PageProps) {
 
-
-
+    
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6 p-4">
       <Suspense fallback={<ProfileSkeleton/>}>
-        <UserData/>
+        <UserData params={params}/>
       </Suspense>
     </div>
   );
 }
 
-async function UserData() {
+async function UserData({params}:PageProps) {
+
+    const {id} = await params
+  const user = await getUserProfile(id)
+
   const session = await auth.api.getSession({
     headers: await headers(),
   })
-  if(!session) redirect("/login")
-  const {id} = session?.user
-  const user = await getUserProfile(id)
+  const ownProfile = session?.user?.id === id
 
   if(user && !user.profile) {
     createProfileAction(id)

@@ -178,7 +178,7 @@ export async function TopBar() {
             variant="outline"
             className="hidden sm:flex border-indigo-500/30 hover:border-indigo-500/60 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 bg-indigo-500/5 hover:bg-indigo-500/10 transition-all font-medium h-9"
           >
-            <Link href="/new-post">Create Post</Link>
+            <Link href="/">Create Post</Link>
           </Button>
 
           <ThemeToggle />

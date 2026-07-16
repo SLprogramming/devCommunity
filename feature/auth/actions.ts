@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { isAPIError } from "better-auth/api";
 import { ToastType } from "@/hooks/use-action-toast";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 export type initialState = {
   message: string;
@@ -92,7 +92,22 @@ export const signUpAction = async (
     };
   }
   try {
+
     let { username, email, password, confirmPassword } = parseData.data;
+    let userExist = await prisma.user.findUnique({
+      where: { email },
+    });
+    if (userExist) {
+      return {
+        message: "User already exists",
+        success: false,
+        toast: {
+          message: "User already exists",
+          type: "error",
+          timestamp: Date.now(),
+        },
+      };
+    }
     await auth.api.signUpEmail({
       body: {
         name: username,
@@ -400,3 +415,4 @@ export const resetPasswordAction = async (
     };
   }
 };
+

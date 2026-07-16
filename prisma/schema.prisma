@@ -23,7 +23,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
-
+  profile       Profile?
   @@map("user")
 }
 
@@ -76,3 +76,30 @@ model Verification {
 }
 
 
+model Profile {
+  id          String   @id @default(uuid())
+  bannerUrl   String?  // Profile page header banner background
+  address     String?
+  githubLink  String?
+  jobTitle    String?
+  bio         String?
+  createdAt   DateTime @default(now()) // "Joined at" date
+  updatedAt   DateTime @updatedAt
+
+  // Relation to User
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Implicit Many-to-Many Relation to Tag for Tech Stack
+  techStack   Tag[]
+
+  @@map("profile")
+}
+
+model Tag {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  profiles Profile[]
+
+  @@map("tag")
+}

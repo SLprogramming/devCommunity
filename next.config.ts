@@ -8,6 +8,15 @@ const nextConfig: NextConfig = {
     preloadEntriesOnStart: false,
     webpackMemoryOptimizations: true,
   },
+  images:{
+    remotePatterns:[
+      {
+        protocol:"https",
+        hostname:"images.unsplash.com",
+        pathname:"/**",
+      }
+    ]
+  }
 };
 
 export default nextConfig;
