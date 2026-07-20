@@ -1,27 +1,44 @@
-"use server"
+"use server";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { revalidateTag, updateTag } from "next/cache";
-import { redirect } from "next/navigation";
+import { revalidatePath, revalidateTag, updateTag } from "next/cache";
+import { put, del } from "@vercel/blob";
 import { connection } from "next/server";
+import { ToastType } from "@/hooks/use-action-toast";
 
-export type CreateProfileActionPayload = {id:string,name:string,jobTitle:string,address:string,githubLink:string,bio:string,techStack:string[]}
+export type CreateProfileActionPayload = {
+  id: string;
+  name: string;
+  jobTitle: string;
+  address: string;
+  githubLink: string;
+  bio: string;
+  techStack: string[];
+};
 
-export const createProfileAction = async (id:string) => {
+export type InitialState = {
+  success: boolean;
+  message: string;
+  error?: string;
+  data?: any;
+  toast?: ToastType;
+  redirectTo?: string;
+};
+
+export const createProfileAction = async (id: string) => {
   try {
-     await prisma.profile.create({
-          data:{
-            userId: id ,
-          }
-        })
-        updateTag(`user-profile-${id}`);
-  } catch (error) {
-    
-  }
-}
+    await prisma.profile.create({
+      data: {
+        userId: id,
+      },
+    });
+    updateTag(`user-profile-${id}`);
+  } catch (error) {}
+};
 
 export const createOrGetTagAction = async (name: string) => {
   try {
-    await connection()
+    await connection();
     const cleanName = name.trim();
 
     if (!cleanName) {
@@ -80,46 +97,108 @@ export const searchTagsAction = async (name: string) => {
   }
 };
 
-export const updateProfile = async ({
-  id,
-  name,
-  jobTitle,
-  address,
-  githubLink,
-  bio,
-  techStack,
-}: CreateProfileActionPayload) => {
+export const updateProfile = async (
+  prevState: InitialState,
+  payload: FormData | { type: "RESET" },
+): Promise<InitialState> => {
   try {
+    if (payload && "type" in payload && payload.type === "RESET") {
+      return {
+        success: false,
+        message: "",
+      };
+    }
+    const formData = payload as FormData;
+    const id = formData.get("id") as string;
+    const name = formData.get("name") as string;
+    const jobTitle = formData.get("jobTitle") as string;
+    const address = formData.get("address") as string;
+    const githubLink = formData.get("githubLink") as string;
+    const bio = formData.get("bio") as string;
+    const techStack = JSON.parse(
+      formData.get("techStack") as string,
+    ) as string[];
+    const avatarFile = formData.get("avatar") as File | null;
+
+    let avatarUrl: string | undefined;
+
+    // 1. Handle Vercel Blob upload if an avatar file was provided
+    if (avatarFile && avatarFile.size > 0) {
+      // Fetch current user image URL from DB
+      const existingUser = await prisma.user.findUnique({
+        where: { id },
+        select: { image: true },
+      });
+
+      // Upload the new image
+      const blob = await put(
+        `avatars/${id}-${Date.now()}.${avatarFile.name.split(".").pop()}`,
+        avatarFile,
+        {
+          access: "public",
+        },
+      );
+      avatarUrl = blob.url;
+
+      // Delete old image from Vercel Blob if it exists and is a Vercel Blob URL
+      if (
+        existingUser?.image &&
+        existingUser.image.includes("vercel-storage.com")
+      ) {
+        await del(existingUser.image);
+      }
+    }
+
     const [updatedUser, updatedProfile] = await prisma.$transaction([
-      // 1. Update the name on the User model
+      // Update the name and image on the User model
       prisma.user.update({
         where: { id },
-        data: { name },
+        data: { name, ...(avatarUrl && { image: avatarUrl }) },
       }),
 
-      // 2. Update the rest of the fields on the Profile model
+      // Update the rest of the fields on the Profile model
       prisma.profile.update({
-        where: { userId: id }, // Adjust field name if your foreign key differs (e.g., id or profileId)
+        where: { userId: id },
         data: {
           jobTitle,
           address,
           githubLink,
           bio,
-            techStack: {
-                set: techStack.map((tagId) => ({ id: tagId })),
-            }
+          techStack: {
+            set: techStack.map((tagId) => ({ id: tagId })),
+          },
         },
-        include:{
-            techStack:true
-        }
+        include: {
+          techStack: true,
+        },
       }),
     ]);
+
     updateTag(`user-profile-${id}`);
-    // return { success: true, user: updatedUser, profile: updatedProfile };
+    revalidatePath(`/profile/${id}`);
+
+    return {
+      success: true,
+      data: { user: updatedUser, profile: updatedProfile },
+      message: "Profile updated successfully",
+      redirectTo: `/profile/${id}`,
+      toast: {
+        type: "success",
+        message: "Profile updated successfully",
+        timestamp: Date.now(),
+      },
+    };
   } catch (error) {
     console.error("Failed to update profile:", error);
 
-    return { success: false, error: "Unable to update profile. Please try again." };
+    return {
+      success: false,
+      message: "failed to update profile",
+      toast: {
+        type: "error",
+        message: "failed to update profile",
+        timestamp: Date.now(),
+      },
+    };
   }
-  redirect("/profile")
 };

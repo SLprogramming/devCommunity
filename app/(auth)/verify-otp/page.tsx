@@ -22,7 +22,6 @@ export default function VerifyOtpPage() {
   const router = useRouter();
 
   const handleVerifyOtp = async (formData: FormData) => {
-    console.log(formData.get("otp"));
     let otp = formData.get("otp") as string;
     setIsPending(true);
     try {

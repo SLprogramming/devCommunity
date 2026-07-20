@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { Search, Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,17 +15,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { Suspense } from "react";
-import {signOutAction} from "@/feature/auth/actions"
+import { signOutAction } from "@/feature/auth/actions";
 async function UserProfile() {
   const session = await auth.api.getSession({
     headers: await headers(),
-  })
-
+  });
 
   return (
     <>
-    {session ? (  
-      <>   <Button
+      {session ? (
+        <>
+          {" "}
+          <Button
             variant="ghost"
             size="icon"
             className="relative text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9 rounded-full"
@@ -35,7 +35,7 @@ async function UserProfile() {
             {/* Notification Badge Indicator */}
             <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />
           </Button>
-           <DropdownMenu>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -82,42 +82,40 @@ async function UserProfile() {
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-border" />
               <form action={signOutAction}>
-         
-              <DropdownMenuItem asChild className="focus:bg-destructive/10 focus:text-destructive text-destructive cursor-pointer">
-           <button type="submit" className="w-full text-left">
-
-                Sign out
-           </button>
-             
-              </DropdownMenuItem>
-              
+                <DropdownMenuItem
+                  asChild
+                  className="focus:bg-destructive/10 focus:text-destructive text-destructive cursor-pointer"
+                >
+                  <button type="submit" className="w-full text-left">
+                    Sign out
+                  </button>
+                </DropdownMenuItem>
               </form>
             </DropdownMenuContent>
           </DropdownMenu>
-      </>
-          ) : (
-            <Button asChild>
-              <Link href="/login">Login</Link>
-            </Button>
-          )}
- 
+        </>
+      ) : (
+        <Button asChild>
+          <Link href="/login">Login</Link>
+        </Button>
+      )}
     </>
-  )
+  );
 }
 function UserProfileSkeleton() {
   return (
     <div className="flex items-center gap-3 animate-pulse">
       {/* Mimics the Notification Bell Button */}
       <div className="h-9 w-9 rounded-full bg-muted/60" />
-      
+
       {/* Mimics the User Profile Avatar Button */}
       <div className="h-8 w-8 rounded-full bg-muted" />
     </div>
   );
 }
 export async function TopBar() {
-// Debugging line to check session value
- 
+  // Debugging line to check session value
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/75 backdrop-blur-md transition-all">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -178,26 +176,20 @@ export async function TopBar() {
             variant="outline"
             className="hidden sm:flex border-indigo-500/30 hover:border-indigo-500/60 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 bg-indigo-500/5 hover:bg-indigo-500/10 transition-all font-medium h-9"
           >
-            <Link href="/">Create Post</Link>
+            <Link href="/post/create">Create Post</Link>
           </Button>
 
           <ThemeToggle />
 
           {/* Notifications Bell */}
-        
 
           {/* User Profile Dropdown */}
-          
-          <Suspense fallback={<UserProfileSkeleton />}>
-           <UserProfile/>
-          </Suspense>
 
-          
-          
+          <Suspense fallback={<UserProfileSkeleton />}>
+            <UserProfile />
+          </Suspense>
         </div>
       </div>
     </header>
   );
 }
-
-

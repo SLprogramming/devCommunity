@@ -10,20 +10,18 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-  databaseHooks:{
-      user:{
-        create:{
-          after: async (user)=>{
-            console.log(`User created: ${user.email}`);
-            await prisma.profile.create({
-              data:{
-                userId: user.id,
-                
-              }
-            })
-          }
-        }
-      }
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          await prisma.profile.create({
+            data: {
+              userId: user.id,
+            },
+          });
+        },
+      },
+    },
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url, token }, request) => {
@@ -33,9 +31,6 @@ export const auth = betterAuth({
         subject: "Verify your email",
         html: `<p>Please verify your email by clicking the following link: <a href="${url}">${url}</a></p>`,
       });
-      console.log(
-        `Send verification email to ${user.email} with token: ${token}`,
-      );
     },
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
@@ -75,7 +70,6 @@ export const auth = betterAuth({
   plugins: [
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
-        console.log(`email sending ${otp} to ${email}`);
         if (type === "sign-in") {
           // Send the OTP for sign in
         } else if (type === "email-verification") {

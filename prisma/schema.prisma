@@ -12,6 +12,13 @@ datasource db {
   provider = "postgresql"
 }
 
+
+enum ReactionType {
+  LIKE
+  DISLIKE
+  LOVE
+  LAUGH
+}
 model User {
   id            String    @id 
   email         String    @unique
@@ -24,6 +31,10 @@ model User {
   sessions      Session[]
   accounts      Account[]
   profile       Profile?
+  posts        Post[]
+  comments    Comment[]
+  reactions   Reaction[]
+  shares      Share[]
   @@map("user")
 }
 
@@ -102,4 +113,104 @@ model Tag {
   profiles Profile[]
 
   @@map("tag")
+}
+
+model Post {
+  id        String    @id @default(uuid())
+  caption   String?   // Short headline or image caption
+  content   String?   @db.Text // Main post body
+  imageUrl  String?   // Vercel Blob CDN URL
+  published Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Author Relation
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Social Relations
+  comments  Comment[]
+  reactions Reaction[]
+  shares    Share[]
+
+  // Many-to-Many Relation with Hashtag
+  hashtags  Hashtag[]
+
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("post")
+}
+
+model Hashtag {
+  id        String   @id @default(uuid())
+  name      String   @unique // Saved in lowercase without '#', e.g. "nextjs"
+  createdAt DateTime @default(now())
+
+  // Relation back to Post
+  posts     Post[]
+
+  @@map("hashtag")
+}
+
+// --- 5. Nested Comment Model ---
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Post Relation
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // Author Relation
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Self-referential Relation for Nested Comments (Replies)
+  parentId  String?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("comment")
+}
+
+// --- 6. Reaction Model ---
+
+model Reaction {
+  id        String       @id @default(uuid())
+  type      ReactionType
+  createdAt DateTime     @default(now())
+
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId    String
+  post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // Ensures one reaction per user per post
+  @@unique([userId, postId])
+  @@index([postId])
+  @@map("reaction")
+}
+
+// --- 7. Share Model ---
+
+model Share {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([postId])
+  @@map("share")
 }

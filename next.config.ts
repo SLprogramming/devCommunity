@@ -8,15 +8,21 @@ const nextConfig: NextConfig = {
     preloadEntriesOnStart: false,
     webpackMemoryOptimizations: true,
   },
-  images:{
-    remotePatterns:[
+  images: {
+    remotePatterns: [
       {
-        protocol:"https",
-        hostname:"images.unsplash.com",
-        pathname:"/**",
-      }
-    ]
-  }
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.blob.vercel-storage.com",
+        port: "",
+        pathname: "/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

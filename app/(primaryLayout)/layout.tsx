@@ -14,7 +14,7 @@ export default function DashboardLayout({
       <TopBar />
 
       {/* 2. Grid Container Layout Canvas */}
-      <div className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-8 px-4 py-8 md:grid-cols-4 sm:px-6 lg:px-8">
+      <div className="mx-auto grid w-full  max-w-7xl flex-1 grid-cols-1 gap-8 px-4 py-8 md:grid-cols-4 sm:px-6 lg:px-8">
         {/* Left Sidebar Channel */}
         <aside className="sticky top-20 hidden h-[calc(100vh-6rem)] flex-col gap-2 overflow-y-auto md:flex">
           <Link

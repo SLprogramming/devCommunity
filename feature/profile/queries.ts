@@ -1,9 +1,8 @@
-
-
-import { cacheTag } from "next/cache"
-import {prisma} from "@/lib/prisma"
-import { auth } from "@/lib/auth"
-import { headers } from "next/headers"
+"use server";
+import { cacheTag } from "next/cache";
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export interface TechStackItem {
   id: string;
@@ -38,31 +37,30 @@ export interface UserProfileData {
 // Full return type (can be null if unauthenticated/not found)
 export type UserProfile = UserProfileData | null;
 
-export const getUserProfile = async (userId:string) => {
-    "use cache"
-    cacheTag(`user-profile-${userId}`)
+export const getUserProfile = async (userId: string) => {
+  "use cache";
+  cacheTag(`user-profile-${userId}`);
 
-    const result = await prisma.user.findUnique({
-        where:{id:userId},
-        include:{
-            profile:{
-                include:{
-                    techStack:true
-                }
-            },
+  const result = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      profile: {
+        include: {
+          techStack: true,
+        },
+      },
+    },
+  });
 
-        }
-    })
+  return result;
+};
 
-    return result
-}
-
-export const getUserProfilePromise = async () => {
-      const session = await auth.api.getSession({
+export const getUserProfilePromise = async (id: string) => {
+  const session = await auth.api.getSession({
     headers: await headers(),
-  })
-  if(!session?.user?.id){
-    return null
+  });
+  if (!session?.user?.id) {
+    return null;
   }
-  return getUserProfile(session?.user?.id)
-}
+  return getUserProfile(session?.user?.id);
+};

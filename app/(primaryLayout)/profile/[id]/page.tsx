@@ -26,96 +26,114 @@ interface PageProps {
   }>;
 }
 
-export default async function DevUserProfile({params}:PageProps) {
-
-    
+export default async function DevUserProfile({ params }: PageProps) {
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6 p-4">
-      <Suspense fallback={<ProfileSkeleton/>}>
-        <UserData params={params}/>
+      <Suspense fallback={<ProfileSkeleton />}>
+        <UserData params={params} />
       </Suspense>
     </div>
   );
 }
 
-async function UserData({params}:PageProps) {
-
-    const {id} = await params
-  const user = await getUserProfile(id)
+async function UserData({ params }: PageProps) {
+  const { id } = await params;
+  const user = await getUserProfile(id);
 
   const session = await auth.api.getSession({
     headers: await headers(),
-  })
-  const ownProfile = session?.user?.id === id
+  });
 
-  if(user && !user.profile) {
-    createProfileAction(id)
+  if (!session) {
+    redirect("/");
+  }
+  // Checks if the logged-in user matches the profile page being viewed
+  const ownProfile = session?.user?.id === id;
+
+  if (user && !user.profile) {
+    createProfileAction(id);
   }
 
-  if(!user) notFound()
-  // Mock data for the current logged-in developer
- const stats =  [
-      { label: "Posts Created", value: "24", icon: FileText },
-      { label: "Total Likes", value: "1.2k", icon: Heart },
-      { label: "Discussions", value: "184", icon: MessageSquare },
-    ]
+  if (!user) notFound();
 
-    return (
-      <>
-       {/* Profile Header Card */}
+  // Mock data for developer metrics
+  const stats = [
+    { label: "Posts Created", value: "24", icon: FileText },
+    { label: "Total Likes", value: "1.2k", icon: Heart },
+    { label: "Discussions", value: "184", icon: MessageSquare },
+  ];
+
+  return (
+    <>
+      {/* Profile Header Card */}
       <div className="bg-card text-card-foreground border border-border rounded-2xl overflow-hidden relative">
         {/* Soft Background Accent Banner */}
         <div className="h-32 bg-gradient-to-r from-primary/10 via-muted to-primary/5 border-b border-border/40" />
 
         <div className="p-6 pt-0 relative flex flex-col sm:flex-row justify-between items-start gap-4">
           {/* Avatar and Info Placement */}
-          {/* Avatar and Info Placement */}
-<div className="flex flex-col sm:flex-row gap-4 -mt-12 items-start sm:items-end">
-  <Image
-    width={96}   
-    height={96}  
-    src={'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
-    alt={user?.name || "User Avatar"}
-    className="w-24 h-24 rounded-2xl object-cover border-4 border-card bg-card shadow-md"
-  />
-  <div className="mb-1">
-    <h1 className="text-2xl font-bold text-foreground leading-tight">
-      {user?.name || "User Name"}
-    </h1>
-    <p className="text-sm text-muted-foreground">@{user?.name}</p>
-  </div>
-</div>
+          <div className="flex flex-col sm:flex-row gap-4 -mt-12 items-start sm:items-end">
+            <Image
+              width={96}
+              height={96}
+              src={
+                user?.image ||
+                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"
+              }
+              alt={user?.name || "User Avatar"}
+              className="w-24 h-24 rounded-2xl object-cover border-4 border-card bg-card shadow-md"
+            />
+            <div className="mb-1">
+              <h1 className="text-2xl font-bold text-foreground leading-tight">
+                {user?.name || "User Name"}
+              </h1>
+              <p className="text-sm text-muted-foreground">@{user?.name}</p>
+            </div>
+          </div>
 
-          {/* Edit Profile Action */}
-          <Link href={'/profile/edit'} className="text-xs font-semibold bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border px-4 py-2 rounded-xl transition-colors sm:mt-4 self-stretch sm:self-auto text-center">
-            Edit Profile
-          </Link>
+          {/* Conditional Edit Action — Rendered ONLY for Profile Owner */}
+          {ownProfile && (
+            <Link
+              href={`/profile/${user?.id}/edit`}
+              className="text-xs font-semibold bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border px-4 py-2 rounded-xl transition-colors sm:mt-4 self-stretch sm:self-auto text-center"
+            >
+              Edit Profile
+            </Link>
+          )}
         </div>
 
         {/* Detailed Metadata Footer */}
         <div className="px-6 pb-6 pt-2 border-t border-border/30 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <Layers className="w-3.5 h-3.5 text-primary" />
-            <span>{user?.profile?.jobTitle}</span>
+            <span>{user?.profile?.jobTitle || "Developer"}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5" />
-            <span>{user?.profile?.address}</span>
+            <span>{user?.profile?.address || "Remote"}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <LinkIcon className="w-3.5 h-3.5" />
-            <a
-              href={user?.profile?.githubLink || "#"}
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-primary transition-colors"
-            >
-              {user?.profile?.githubLink || "#"}
-            </a>
+            {user?.profile?.githubLink ? (
+              <a
+                href={user.profile.githubLink}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                {user.profile.githubLink}
+              </a>
+            ) : (
+              <span>No link added</span>
+            )}
           </div>
           <div className="flex items-center gap-1.5 ml-auto">
             <Calendar className="w-3.5 h-3.5" />
-            <span>{user?.profile?.createdAt?.toDateString() || "a few days ago"}</span>
+            <span>
+              {user?.profile?.createdAt
+                ? new Date(user.profile.createdAt).toLocaleDateString()
+                : "Joined recently"}
+            </span>
           </div>
         </div>
       </div>
@@ -148,14 +166,20 @@ async function UserData({params}:PageProps) {
               Tech Stack
             </h3>
             <div className="flex flex-wrap gap-1.5">
-              {user.profile?.techStack?.map((skill) => (
-                <span
-                  key={skill?.id}
-                  className="text-xs bg-muted text-muted-foreground border border-border px-2.5 py-1 rounded-lg"
-                >
-                  {skill?.name}
+              {user?.profile?.techStack && user.profile.techStack.length > 0 ? (
+                user.profile.techStack.map((skill) => (
+                  <span
+                    key={skill?.id}
+                    className="text-xs bg-muted text-muted-foreground border border-border px-2.5 py-1 rounded-lg"
+                  >
+                    {skill?.name}
+                  </span>
+                ))
+              ) : (
+                <span className="text-xs text-muted-foreground italic">
+                  No tech stack added yet.
                 </span>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -215,16 +239,14 @@ async function UserData({params}:PageProps) {
           </div>
         </div>
       </div>
-      </>
-    )
+    </>
+  );
 }
-
 // app/(primaryLayout)/profile/loading.tsx or components/ProfileSkeleton.tsx
 
- function ProfileSkeleton() {
+function ProfileSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-      
       {/* Profile Header Card Skeleton */}
       <div className="bg-card border border-border rounded-2xl overflow-hidden relative">
         {/* Banner */}
@@ -255,7 +277,6 @@ async function UserData({params}:PageProps) {
 
       {/* Main Grid Split */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
         {/* Left Hand Panel */}
         <div className="flex flex-col gap-6">
           {/* About Me Card */}
@@ -285,7 +306,10 @@ async function UserData({params}:PageProps) {
           {/* Stats Analytics Grid */}
           <div className="grid grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-2.5">
+              <div
+                key={i}
+                className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-2.5"
+              >
                 <div className="flex items-center justify-between">
                   <div className="h-3 w-16 bg-muted/70 rounded-md" />
                   <div className="w-4 h-4 bg-muted/50 rounded-md" />
@@ -309,10 +333,8 @@ async function UserData({params}:PageProps) {
               <div className="h-3 w-56 bg-muted/60 rounded-md" />
             </div>
           </div>
-
         </div>
       </div>
-
     </div>
   );
 }
