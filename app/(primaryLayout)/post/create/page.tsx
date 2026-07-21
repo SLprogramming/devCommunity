@@ -1,4 +1,6 @@
-import CreatePostForm from "@/feature/post/component/CreatePostForm";
+import CreatePostForm, {
+  PostCreateQueue,
+} from "@/feature/post/component/CreatePostForm";
 import CreatePostCardSkeleton from "@/feature/post/component/CreatePostFormSkeleton";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -26,6 +28,7 @@ async function InternalWarper() {
   return (
     <>
       <CreatePostForm user={user} />
+      <PostCreateQueue />
     </>
   );
 }

@@ -5,7 +5,9 @@ import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAllPosts } from "@/feature/post/queries";
 import Link from "next/link";
-import { PostTimestamp } from "@/feature/post/component/PostTimeStamp";
+import Image from "next/image";
+import { PostTimestamp } from "@/feature/post/component/PostTimestamp";
+import { PostCreateQueue } from "@/feature/post/component/CreatePostForm";
 
 export default async function DevCommunityDashboard() {
   return (
@@ -29,6 +31,42 @@ export default async function DevCommunityDashboard() {
           </button>
         </div>
         <PostsData />
+        <aside className="hidden lg:flex lg:col-span-3 flex-col gap-6 sticky top-6">
+          <div className="bg-card text-card-foreground border border-border rounded-2xl p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <Image
+                width={48}
+                height={48}
+                src={
+                  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"
+                }
+                alt={"Author Avatar"}
+                className="w-12 h-12 rounded-2xl object-cover border border-border bg-muted flex-shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <h4 className="font-bold text-foreground text-sm leading-tight truncate">
+                  {"Anonymous Author"}
+                </h4>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                  {"@author"}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+              {
+                "Full-stack engineer passionate about backend architecture, Node.js performance tuning, and high-concurrency systems."
+              }
+            </p>
+
+            <Link
+              href={`/profile/${"anonymous"}`}
+              className="w-full text-center py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border text-xs font-semibold rounded-xl transition-colors"
+            >
+              View Profile
+            </Link>
+          </div>
+        </aside>
       </main>
     </>
   );
@@ -41,8 +79,9 @@ async function PostsData() {
 
   return (
     <>
+      <PostCreateQueue />
       {/* Posts List */}
-      {posts.map((post) => (
+      {posts?.reverse().map((post) => (
         <Link
           href={`/post/${post.id}`}
           key={post.id}

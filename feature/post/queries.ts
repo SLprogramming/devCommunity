@@ -6,7 +6,7 @@ import { cacheLife, cacheTag } from "next/cache";
 export const getAllPosts = async () => {
   cacheLife("hours");
   cacheTag("posts");
-
+  console.log("getting all post");
   const posts = await prisma.post.findMany({
     include: {
       author: true,
