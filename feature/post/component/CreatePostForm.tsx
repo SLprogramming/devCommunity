@@ -1,42 +1,22 @@
 "use client";
 import {
   Globe,
-  Loader2,
-  AlertCircle,
-  RotateCcw,
   X,
-  ThumbsUp,
-  Eye,
   ImagePlus,
-  Paperclip,
-  Smile,
-  Type,
   Maximize2,
   Minimize2,
   Hash,
-  MessageSquare,
   Send,
   Sparkles,
 } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
-import { useState, useRef, useTransition, useEffect } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { useState, useRef } from "react";
 import Image from "next/image";
-
 import { extractHashtags } from "@/utils/helper";
-import { useActionState } from "react";
 import { createPostAction, type InitialState } from "../actions";
-import { useActionToast } from "@/hooks/use-action-toast";
-
+import { usePostQueue } from "@/feature/post/store";
+import { redirect } from "next/navigation";
+import { toast } from "sonner";
 interface CreatePostCardProps {
   user: {
     id: string;
@@ -50,13 +30,8 @@ const initialState: InitialState = {
   success: false,
 };
 export default function CreatePostCard({ user }: CreatePostCardProps) {
-  const [state, formAction, isCreatePostPending] = useActionState(
-    createPostAction,
-    initialState,
-  );
-
+  const postQueue = usePostQueue();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isPending, startTransition] = useTransition();
   const [caption, setCaption] = useState("");
   const [content, setContent] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -69,22 +44,14 @@ export default function CreatePostCard({ user }: CreatePostCardProps) {
   const maxContentLength = 5000;
   const liveHashtags = extractHashtags(`${caption} ${content}`);
 
-  useActionToast(state);
-
-  useEffect(() => {
-    return () => {
-      startTransition(() => formAction({ type: "RESET" }));
-    };
-  }, [formAction]);
-
-  useEffect(() => {
-    if (state.success) {
-      setCaption("");
-      setContent("");
-      handleRemoveImage();
-      setIsExpanded(false);
-    }
-  }, [state]);
+  // useEffect(() => {
+  //   if (state.success) {
+  //     setCaption("");
+  //     setContent("");
+  //     handleRemoveImage();
+  //     setIsExpanded(false);
+  //   }
+  // }, [state]);
 
   const handleImageFile = (file: File) => {
     if (file && file.type.startsWith("image/")) {
@@ -113,7 +80,7 @@ export default function CreatePostCard({ user }: CreatePostCardProps) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!content.trim() && !caption.trim() && !selectedImage) return;
     const cleanContent = content
@@ -127,10 +94,41 @@ export default function CreatePostCard({ user }: CreatePostCardProps) {
     if (caption) formData.append("caption", caption);
     formData.append("hashtags", JSON.stringify(liveHashtags));
 
-    startTransition(async () => {
-      //   Server action integration here
-      await formAction(formData);
+    if (!cleanContent && !caption.trim() && !selectedImage) {
+      toast.warning("Please write something or upload an image.");
+      return;
+    }
+
+    const tempId = uuidv4();
+    postQueue.addPost({
+      id: tempId,
+      caption: caption,
+      content: cleanContent,
+      imagePreview: imagePreview,
+      hashtags: liveHashtags,
+      status: "pending",
+      user: {
+        name: user?.name,
+        image: user?.image,
+      },
     });
+
+    //   Server action integration here
+    createPostAction(formData).then((res) => {
+      console.log(res);
+      if (!res.success) {
+        toast.error(res.message);
+        postQueue.changeStatus(tempId, "failed");
+      } else {
+        toast.success(res.message);
+        postQueue.removePost(tempId);
+      }
+    });
+    setCaption("");
+    setContent("");
+    handleRemoveImage();
+    setIsExpanded(false);
+    redirect("/");
   };
 
   return (
@@ -347,167 +345,19 @@ export default function CreatePostCard({ user }: CreatePostCardProps) {
 
               <button
                 type="submit"
-                disabled={
-                  isPending ||
-                  (!content.trim() && !caption.trim() && !selectedImage)
-                }
+                disabled={!content.trim() && !caption.trim() && !selectedImage}
                 className="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-primary/20 active:scale-95"
               >
-                {isPending ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Publishing...</span>
-                  </>
-                ) : (
+                {
                   <>
                     <Send className="w-3.5 h-3.5" />
                     <span>Publish</span>
                   </>
-                )}
+                }
               </button>
             </div>
           </div>
         </form>
-      </div>
-    </div>
-  );
-}
-
-export function PostCreateQueue() {
-  return (
-    <div className="w-full space-y-4">
-      {/* ==================== ITEM 1: PUBLISHING STATE ==================== */}
-      <div className="bg-card text-card-foreground border border-border rounded-2xl p-6 relative overflow-hidden transition-all shadow-sm">
-        {/* Top Animated Progress Bar */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-muted">
-          <div className="h-full bg-primary animate-pulse w-2/3 transition-all duration-500" />
-        </div>
-
-        {/* Author Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <img
-              src="/placeholder-avatar.png"
-              alt="Author photo"
-              className="h-8 w-8 rounded-lg object-cover border border-border"
-            />
-            <div>
-              <h4 className="text-sm font-medium text-foreground/90">You</h4>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Globe className="h-3 w-3 text-muted-foreground/70" />
-                <span>Publishing to feed...</span>
-              </p>
-            </div>
-          </div>
-
-          {/* Status Badge */}
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-muted/60 text-muted-foreground text-xs font-medium border border-border">
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-            <span>Posting...</span>
-          </span>
-        </div>
-
-        {/* Post Caption */}
-        <h2 className="text-xl font-bold text-foreground mb-3 leading-snug">
-          Building optimistic UI queues in Next.js App Router using React 19
-          primitives! 🚀
-        </h2>
-
-        {/* Optional Image Uploading Preview */}
-        <div className="mb-4 overflow-hidden rounded-xl border border-border bg-muted/30 relative max-h-96">
-          <img
-            src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop"
-            alt="Uploading preview"
-            className="w-full max-h-96 object-cover brightness-95"
-          />
-          <div className="absolute inset-0 bg-background/20 backdrop-blur-[1px] flex items-center justify-center">
-            <Loader2 className="h-8 w-8 text-primary animate-spin" />
-          </div>
-        </div>
-
-        {/* Pending Hashtags */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          <span className="text-xs font-mono bg-muted/60 text-muted-foreground px-2.5 py-1 rounded-md border border-border">
-            #nextjs
-          </span>
-          <span className="text-xs font-mono bg-muted/60 text-muted-foreground px-2.5 py-1 rounded-md border border-border">
-            #webdev
-          </span>
-        </div>
-
-        {/* Footer Actions Placeholder */}
-        <div className="flex items-center justify-between text-muted-foreground text-sm border-t border-border/50 pt-4 opacity-50 select-none">
-          <div className="flex gap-4">
-            <div className="flex items-center gap-1.5">
-              <ThumbsUp className="h-4 w-4" />
-              <span>0</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <MessageSquare className="h-4 w-4" />
-              <span>0</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground/80">
-            <Eye className="h-3.5 w-3.5" />
-            <span>0</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ==================== ITEM 2: FAILED STATE WITH RETRY ==================== */}
-      <div className="bg-card text-card-foreground border border-destructive/40 rounded-2xl p-6 transition-all shadow-sm">
-        {/* Author Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <img
-              src="/placeholder-avatar.png"
-              alt="Author photo"
-              className="h-8 w-8 rounded-lg object-cover border border-border"
-            />
-            <div>
-              <h4 className="text-sm font-medium text-foreground/90">You</h4>
-              <p className="text-xs text-destructive font-medium">
-                Failed to upload
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-destructive/10 text-destructive text-xs font-medium border border-destructive/20">
-              <AlertCircle className="h-3.5 w-3.5" />
-              <span>Failed</span>
-            </span>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Failed Content */}
-        <h2 className="text-xl font-bold text-foreground mb-3 leading-snug">
-          Failed post content draft preserved here so you never lose your
-          thoughts.
-        </h2>
-
-        {/* Retry Banner Footer */}
-        <div className="flex items-center justify-between bg-destructive/10 border border-destructive/20 rounded-xl p-3 mt-4 text-xs">
-          <span className="text-destructive font-medium">
-            Something went wrong while publishing.
-          </span>
-          <Button
-            size="sm"
-            variant="destructive"
-            className="h-8 text-xs gap-1.5 px-3 rounded-lg"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            <span>Retry</span>
-          </Button>
-        </div>
       </div>
     </div>
   );

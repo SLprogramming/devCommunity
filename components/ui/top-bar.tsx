@@ -43,7 +43,7 @@ async function UserProfile() {
               >
                 <Avatar className="h-8 w-8 border border-border">
                   <AvatarImage
-                    src="https://github.com/adshadcn.png"
+                    src={session?.user?.image || undefined}
                     alt="User avatar"
                   />
                   <AvatarFallback className="bg-muted text-muted-foreground text-xs">

@@ -18,7 +18,7 @@ export default function DashboardLayout({
         {/* Left Sidebar Channel */}
         <aside className="sticky top-20 hidden h-[calc(100vh-6rem)] flex-col gap-2 overflow-y-auto md:flex">
           <Link
-            href="#"
+            href="/"
             className="flex items-center gap-3 px-4 py-3 rounded-xl bg-accent text-accent-foreground font-medium border border-border shadow-sm"
           >
             <Home className="h-5 w-5 text-primary" /> Home
@@ -66,7 +66,7 @@ export default function DashboardLayout({
         </aside>
 
         {/* 3. Main Stream Content Channel */}
-        <main className="md:col-span-3 min-w-0">{children}</main>
+        <main className="md:col-span-3 min-w-0 ">{children}</main>
       </div>
     </div>
   );

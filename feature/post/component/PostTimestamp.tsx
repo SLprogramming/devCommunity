@@ -21,7 +21,7 @@ export function PostTimestamp({ createdAt }: PostTimestampProps) {
       const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
       // Handle future dates or exact match
-      if (diffInSeconds < 30) {
+      if (diffInSeconds < 59) {
         return "Just now";
       }
 
