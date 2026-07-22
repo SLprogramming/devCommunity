@@ -11,9 +11,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 export default async function PostDetailData({
   id,
   userId,
+  userImage,
 }: {
   id: string;
   userId: string | undefined;
+  userImage: string | null;
 }) {
   "use cache";
   const postDetail = await getPostDetailWithId(id);
@@ -141,6 +143,7 @@ export default async function PostDetailData({
           initialComments={postComments}
           userId={userId || null}
           postId={id}
+          userImage={userImage}
         />
       </main>
 

@@ -43,7 +43,11 @@ async function InternalWarper({ id }: { id: string }) {
   });
   return (
     <>
-      <PostDetailData id={id} userId={session?.user?.id} />
+      <PostDetailData
+        id={id}
+        userId={session?.user?.id}
+        userImage={session?.user?.image || null}
+      />
     </>
   );
 }
