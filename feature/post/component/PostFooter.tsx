@@ -13,7 +13,8 @@ import {
 import { reactPostAction } from "@/feature/post/actions";
 import { type ReactionType as ImportReactionType } from "@/app/generated/prisma/enums";
 import { toast } from "sonner";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
+import { formatCount } from "@/utils/helper";
 
 type ReactionType = ImportReactionType | null;
 
@@ -69,6 +70,7 @@ interface PostFooterProps {
 }
 
 export function PostFooter({ initialData }: PostFooterProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   console.log(initialData);
   // 1. Pass initialData directly into useOptimistic (no useState needed!)
@@ -98,7 +100,7 @@ export function PostFooter({ initialData }: PostFooterProps) {
 
   const handleSelectReaction = (type: ReactionType) => {
     if (!initialData?.userId) {
-      return useRouter().push("/login");
+      return router.push("/login");
     }
     const targetReaction =
       type === null || optimisticState.userReaction === type ? null : type;
@@ -167,7 +169,7 @@ export function PostFooter({ initialData }: PostFooterProps) {
             />
             <span className="font-medium">
               {activeReactionData ? activeReactionData.label : "Like"} (
-              {optimisticState.reactionCount})
+              {formatCount(optimisticState.reactionCount)})
             </span>
           </button>
         </div>
@@ -175,7 +177,7 @@ export function PostFooter({ initialData }: PostFooterProps) {
         {/* ================= COMMENTS BUTTON ================= */}
         <button className="flex items-center gap-1.5 hover:text-primary transition-colors group/btn">
           <MessageSquare className="h-4 w-4 group-hover/btn:scale-110 transition-transform" />
-          <span>{initialData?.comments ?? 0}</span>
+          <span>{formatCount(initialData?.comments ?? 0)}</span>
         </button>
 
         {/* ================= SHARE BUTTON ================= */}
@@ -192,14 +194,14 @@ export function PostFooter({ initialData }: PostFooterProps) {
           title="Share post"
         >
           <Share2 className="h-4 w-4 group-hover/btn:scale-110 transition-transform" />
-          <span>{initialData?.share ?? 0}</span>
+          <span>{formatCount(initialData?.share ?? 0)}</span>
         </button>
       </div>
 
       {/* ================= VIEWS COUNTER ================= */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground/80">
         <Eye className="h-3.5 w-3.5" />
-        <span>{initialData?.views ?? 0}</span>
+        <span>{formatCount(initialData?.views ?? 0)}</span>
       </div>
     </div>
   );

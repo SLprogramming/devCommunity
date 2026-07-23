@@ -1,7 +1,6 @@
 import CreatePostForm from "@/feature/post/component/CreatePostForm";
 import CreatePostCardSkeleton from "@/feature/post/component/CreatePostFormSkeleton";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/get-session";
 import React, { Suspense } from "react";
 
 function page() {
@@ -15,9 +14,7 @@ function page() {
 }
 
 async function InternalWarper() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
   const user = {
     id: session?.user?.id || "",
     name: session?.user?.name || "",

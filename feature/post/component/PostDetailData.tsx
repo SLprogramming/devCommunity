@@ -50,7 +50,7 @@ export default async function PostDetailData({
                     alt="User avatar"
                   />
                   <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                    {postDetail?.author?.name || "U"}
+                    {postDetail?.author?.name?.charAt(0) || "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
@@ -157,7 +157,7 @@ export default async function PostDetailData({
                 alt="User avatar"
               />
               <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                {postDetail?.author?.name || "U"}
+                {postDetail?.author?.name?.charAt(0) || "U"}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">

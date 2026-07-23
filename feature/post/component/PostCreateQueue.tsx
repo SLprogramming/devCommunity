@@ -50,7 +50,7 @@ function PendingPostCard({ item }: { item: any }) {
   const progress = useSimulatedProgress(item?.status === "pending");
 
   return (
-    <div className="bg-card text-card-foreground border border-border rounded-2xl p-6 relative overflow-hidden transition-all shadow-sm">
+    <div className="bg-card max-w-3xl text-card-foreground border border-border rounded-2xl p-6 relative overflow-hidden transition-all shadow-sm">
       {/* Dynamic Simulated Progress Bar */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-muted">
         <div
@@ -159,7 +159,7 @@ export function PostCreateQueue() {
           return (
             <div
               key={item.id}
-              className="bg-card text-card-foreground border border-destructive/40 rounded-2xl p-6 transition-all shadow-sm"
+              className="bg-card max-w-3xl text-card-foreground border border-destructive/40 rounded-2xl p-6 transition-all shadow-sm"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">

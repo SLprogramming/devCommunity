@@ -1,8 +1,7 @@
 "use server";
 import { cacheTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/get-session";
 
 export interface TechStackItem {
   id: string;
@@ -56,9 +55,7 @@ export const getUserProfile = async (userId: string) => {
 };
 
 export const getUserProfilePromise = async (id: string) => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
   if (!session?.user?.id) {
     return null;
   }

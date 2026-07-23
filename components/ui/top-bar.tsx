@@ -12,14 +12,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { Suspense } from "react";
 import { signOutAction } from "@/feature/auth/actions";
+import { getSession } from "@/lib/get-session";
 async function UserProfile() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   return (
     <>

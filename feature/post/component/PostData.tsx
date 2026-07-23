@@ -31,7 +31,7 @@ export default async function PostsData({ userId }: { userId: string | null }) {
                 alt="User avatar"
               />
               <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                {post?.author?.name || "U"}
+                {post?.author?.name?.charAt(0) || "U"}
               </AvatarFallback>
             </Avatar>
             <div>
@@ -45,7 +45,12 @@ export default async function PostsData({ userId }: { userId: string | null }) {
           </Link>
           <Link href={`/post/${post.id}`}>
             <h2 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors mb-3 leading-snug">
-              {post?.caption}
+              {(() => {
+                const text = post?.caption || post?.content;
+                return text && text.length > 500
+                  ? `${text.slice(0, 500)}...`
+                  : text;
+              })()}
             </h2>
 
             {/* Optional Post Image */}

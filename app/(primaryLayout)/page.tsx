@@ -1,6 +1,5 @@
 import PostsData, { PostFeedSkeleton } from "@/feature/post/component/PostData";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/get-session";
 import { Suspense } from "react";
 
 export default async function DevCommunityDashboard() {
@@ -33,9 +32,7 @@ export default async function DevCommunityDashboard() {
 }
 
 async function InternalWarper() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
   return (
     <>
       <PostsData userId={session?.user?.id || null} />

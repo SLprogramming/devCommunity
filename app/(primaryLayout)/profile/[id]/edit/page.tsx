@@ -6,8 +6,7 @@ import { getUserProfilePromise } from "@/feature/profile/queries";
 import { Suspense } from "react";
 import EditFormSkeleton from "@/feature/profile/component/EditFormSkeleton";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/get-session";
 
 interface PageProps {
   params: Promise<{
@@ -50,9 +49,7 @@ async function EditFormWrapper({
   const { id } = await params;
 
   // 2. Fetch authenticated session
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   // 3. Guest check
   if (!session?.user) {

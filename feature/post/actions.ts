@@ -9,6 +9,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { success } from "zod";
+import { getSession } from "@/lib/get-session";
 export type InitialState = {
   success: boolean;
   message: string;
@@ -38,7 +39,7 @@ export const createPostAction = async (
         message: "",
       };
     }
-
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     const formData = payload as FormData;
     const authorId = formData.get("authorId") as string;
     const caption = (formData.get("caption") as string)?.trim() || null;
@@ -152,9 +153,7 @@ export const reactPostAction = async ({
   postId: string;
   reactionType: ReactionType | null;
 }) => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user?.id) {
     redirect("/login");

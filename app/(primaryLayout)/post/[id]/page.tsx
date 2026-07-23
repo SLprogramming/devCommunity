@@ -1,12 +1,11 @@
 import { getPopularPostIds } from "@/feature/post/queries";
 import { notFound } from "next/navigation";
 
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { Suspense } from "react";
 import PostDetailData, {
   PostDataSkeleton,
 } from "@/feature/post/component/PostDetailData";
+import { getSession } from "@/lib/get-session";
 
 interface PageProps {
   params: Promise<{
@@ -38,9 +37,7 @@ export default async function PostDetailPage({ params }: PageProps) {
 }
 
 async function InternalWarper({ id }: { id: string }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
   return (
     <>
       <PostDetailData
