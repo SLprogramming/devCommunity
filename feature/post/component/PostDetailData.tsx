@@ -8,15 +8,7 @@ import CommentSection from "@/feature/post/component/PostCommentSection";
 import { getPostComments, getPostDetailWithId } from "@/feature/post/queries";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-export default async function PostDetailData({
-  id,
-  userId,
-  userImage,
-}: {
-  id: string;
-  userId: string | undefined;
-  userImage: string | null;
-}) {
+export default async function PostDetailData({ id }: { id: string }) {
   "use cache";
   const postDetail = await getPostDetailWithId(id);
   const postComments = await getPostComments(id);
@@ -136,15 +128,10 @@ export default async function PostDetailData({
                   3 clean, race-condition safe queries...
                 </p> */}
             </div>
-            <PostFooterWarper postId={postDetail?.id} userId={userId || null} />
+            <PostFooterWarper postId={postDetail?.id} />
           </div>
         </article>
-        <CommentSection
-          initialComments={postComments}
-          userId={userId || null}
-          postId={id}
-          userImage={userImage}
-        />
+        <CommentSection initialComments={postComments} postId={id} />
       </main>
 
       {/* ================= RIGHT SIDEBAR: AUTHOR CARD ================= */}

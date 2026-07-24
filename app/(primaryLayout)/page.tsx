@@ -1,6 +1,4 @@
 import PostsData, { PostFeedSkeleton } from "@/feature/post/component/PostData";
-import { getSession } from "@/lib/get-session";
-import { Suspense } from "react";
 
 export default async function DevCommunityDashboard() {
   return (
@@ -23,19 +21,8 @@ export default async function DevCommunityDashboard() {
             Latest
           </button>
         </div>
-        <Suspense fallback={<PostFeedSkeleton />}>
-          <InternalWarper />
-        </Suspense>
+        <PostsData />
       </main>
-    </>
-  );
-}
-
-async function InternalWarper() {
-  const session = await getSession();
-  return (
-    <>
-      <PostsData userId={session?.user?.id || null} />
     </>
   );
 }

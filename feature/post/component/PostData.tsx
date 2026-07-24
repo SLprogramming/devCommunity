@@ -6,7 +6,7 @@ import { PostTimestamp } from "./PostTimestamp";
 import PostFooterWarper from "@/feature/post/component/PostFooterWarper";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export default async function PostsData({ userId }: { userId: string | null }) {
+export default async function PostsData() {
   "use cache";
   cacheLife("hours");
   // Mock data for the feed
@@ -76,7 +76,7 @@ export default async function PostsData({ userId }: { userId: string | null }) {
               </span>
             ))}
           </div>
-          <PostFooterWarper postId={post.id} userId={userId} />
+          <PostFooterWarper postId={post.id} />
           {/* Card Footer Actions */}
         </article>
       ))}

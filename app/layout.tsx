@@ -4,6 +4,8 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import NextTopLoader from "nextjs-toploader";
+import { AppTopLoader } from "@/components/theme/TopLoader";
 
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -40,6 +42,7 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-full flex flex-col">
+        <AppTopLoader />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

@@ -18,13 +18,8 @@ import { notFound, redirect } from "next/navigation";
 import { createProfileAction } from "@/feature/profile/actions";
 import Image from "next/image";
 import Link from "next/link";
-export default async function UserData({
-  userId: id,
-  ownProfile,
-}: {
-  userId: string;
-  ownProfile: boolean;
-}) {
+import ProfileButtons from "./ProfileButtons";
+export default async function UserData({ userId: id }: { userId: string }) {
   const user = await getUserProfile(id);
 
   if (user && !user.profile) {
@@ -69,14 +64,7 @@ export default async function UserData({
           </div>
 
           {/* Conditional Edit Action — Rendered ONLY for Profile Owner */}
-          {ownProfile && (
-            <Link
-              href={`/profile/${user?.id}/edit`}
-              className="text-xs font-semibold bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border px-4 py-2 rounded-xl transition-colors sm:mt-4 self-stretch sm:self-auto text-center"
-            >
-              Edit Profile
-            </Link>
-          )}
+          <ProfileButtons userId={id} />
         </div>
 
         {/* Detailed Metadata Footer */}

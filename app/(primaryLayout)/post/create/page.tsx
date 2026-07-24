@@ -1,9 +1,10 @@
 import CreatePostForm from "@/feature/post/component/CreatePostForm";
 import CreatePostCardSkeleton from "@/feature/post/component/CreatePostFormSkeleton";
 import { getSession } from "@/lib/get-session";
-import React, { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
-function page() {
+function Page() {
   return (
     <div>
       <Suspense fallback={<CreatePostCardSkeleton />}>
@@ -15,16 +16,12 @@ function page() {
 
 async function InternalWarper() {
   const session = await getSession();
-  const user = {
-    id: session?.user?.id || "",
-    name: session?.user?.name || "",
-    image: session?.user?.image || "",
-  };
+  if (!session) redirect("/");
   return (
     <>
-      <CreatePostForm user={user} />
+      <CreatePostForm />
     </>
   );
 }
 
-export default page;
+export default Page;

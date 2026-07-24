@@ -23,6 +23,7 @@ import { type PostComment } from "../queries";
 import { writeCommentAction } from "../actions";
 import { toast } from "sonner";
 import { PostTimestamp } from "./PostTimestamp";
+import { useSession } from "@/lib/auth-client";
 
 export type CommentWithReplies = PostComment & {
   replies?: CommentWithReplies[];
@@ -60,18 +61,19 @@ function countTotalReplies(comment: CommentWithReplies): number {
 
 export default function CommentSection({
   initialComments = [],
-  userId,
   postId,
-  userImage,
 }: {
   initialComments: PostComment[];
-  userId: string | null;
   postId: string;
-  userImage: string | null;
 }) {
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const [newComment, setNewComment] = useState("");
   const [isPending, startTransition] = useTransition();
-
+  const session = useSession();
   // Optimistic UI state management for comments
   const [optimisticComments, addOptimisticComment] = useOptimistic(
     initialComments,
@@ -81,9 +83,11 @@ export default function CommentSection({
   const commentTree = buildCommentTree(optimisticComments);
 
   const currentUserAvatar =
-    userImage ||
-    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80";
-
+    isMounted && session.data?.user.image
+      ? session.data?.user.image
+      : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80";
+  const userId =
+    isMounted && session.data?.user.id ? session.data?.user.id : null;
   const handleWriteComment = async () => {
     const trimmedContent = newComment.trim();
     if (!trimmedContent) return;
@@ -107,7 +111,7 @@ export default function CommentSection({
           email: "",
           emailVerified: false,
           role: "USER",
-          image: userImage,
+          image: currentUserAvatar,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -188,7 +192,7 @@ export default function CommentSection({
           {commentTree.length > 0 ? (
             commentTree.map((comment) => (
               <CommentItem
-                userImage={userImage}
+                userImage={currentUserAvatar}
                 key={comment.id}
                 comment={comment}
                 postId={postId}

@@ -1,6 +1,11 @@
 "use client";
 
-import React, { useOptimistic, useTransition } from "react";
+import React, {
+  useEffect,
+  useOptimistic,
+  useState,
+  useTransition,
+} from "react";
 import {
   ThumbsUp,
   Heart,
@@ -15,6 +20,8 @@ import { type ReactionType as ImportReactionType } from "@/app/generated/prisma/
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { formatCount } from "@/utils/helper";
+import { useSession } from "@/lib/auth-client";
+import Link from "next/link";
 
 type ReactionType = ImportReactionType | null;
 
@@ -59,10 +66,8 @@ const REACTIONS: ReactionOption[] = [
 
 interface PostFooterProps {
   initialData: {
-    userId?: string | null;
     postId: string;
-    reactions?: ReactionType[];
-    userReaction?: ReactionType;
+    reactions?: { type: ReactionType; userId: string }[];
     comments?: number;
     share?: number;
     views?: number;
@@ -72,11 +77,25 @@ interface PostFooterProps {
 export function PostFooter({ initialData }: PostFooterProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  console.log(initialData);
-  // 1. Pass initialData directly into useOptimistic (no useState needed!)
+  const session = useSession();
+
+  // 1. Track mount state to prevent SSR vs Client mismatch
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // 2. Only compute user reaction *after* the client has mounted
+  const userReaction =
+    isMounted && session.data?.user.id
+      ? initialData?.reactions?.find((e) => e.userId === session.data?.user.id)
+          ?.type || null
+      : null;
+
+  // 3. Pass initialData into useOptimistic
   const [optimisticState, setOptimisticState] = useOptimistic(
     {
-      userReaction: initialData?.userReaction || null,
+      userReaction: userReaction,
       reactionCount: initialData?.reactions?.length || 0,
     },
     (current, nextReaction: ReactionType) => {
@@ -99,17 +118,15 @@ export function PostFooter({ initialData }: PostFooterProps) {
   );
 
   const handleSelectReaction = (type: ReactionType) => {
-    if (!initialData?.userId) {
+    if (!session.data?.user.id) {
       return router.push("/login");
     }
     const targetReaction =
       type === null || optimisticState.userReaction === type ? null : type;
 
     startTransition(async () => {
-      // 2. Immediately apply optimistic UI
       setOptimisticState(targetReaction);
 
-      // 3. Call server action (Ensure reactPostAction calls revalidatePath on the server!)
       const res = await reactPostAction({
         postId: initialData.postId,
         reactionType: targetReaction,
@@ -175,10 +192,13 @@ export function PostFooter({ initialData }: PostFooterProps) {
         </div>
 
         {/* ================= COMMENTS BUTTON ================= */}
-        <button className="flex items-center gap-1.5 hover:text-primary transition-colors group/btn">
+        <Link
+          href={`/post/${initialData.postId}`}
+          className="flex items-center gap-1.5 hover:text-primary transition-colors group/btn"
+        >
           <MessageSquare className="h-4 w-4 group-hover/btn:scale-110 transition-transform" />
           <span>{formatCount(initialData?.comments ?? 0)}</span>
-        </button>
+        </Link>
 
         {/* ================= SHARE BUTTON ================= */}
         <button

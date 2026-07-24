@@ -10,26 +10,17 @@ import {
   Sparkles,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { extractHashtags } from "@/utils/helper";
-import { createPostAction, type InitialState } from "../actions";
+import { createPostAction } from "../actions";
 import { usePostQueue } from "@/feature/post/store";
 import { redirect } from "next/navigation";
 import { toast } from "sonner";
-interface CreatePostCardProps {
-  user: {
-    id: string;
-    name?: string | null;
-    image?: string | null;
-  };
-}
+import { useSession } from "@/lib/auth-client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const initialState: InitialState = {
-  message: "",
-  success: false,
-};
-export default function CreatePostCard({ user }: CreatePostCardProps) {
+export default function CreatePostCard() {
   const postQueue = usePostQueue();
   const [isExpanded, setIsExpanded] = useState(false);
   const [caption, setCaption] = useState("");
@@ -43,6 +34,18 @@ export default function CreatePostCard({ user }: CreatePostCardProps) {
 
   const maxContentLength = 5000;
   const liveHashtags = extractHashtags(`${caption} ${content}`);
+  const session = useSession();
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const userId =
+    isMounted && session.data?.user.id ? session.data?.user.id : null;
+  const userImage =
+    isMounted && session.data?.user.image ? session.data?.user.image : null;
+  const userName =
+    isMounted && session.data?.user.name ? session.data?.user.name : "";
 
   // useEffect(() => {
   //   if (state.success) {
@@ -87,8 +90,9 @@ export default function CreatePostCard({ user }: CreatePostCardProps) {
       .replace(/#[\w\u0590-\u05ff]+/g, "") // Removes #hashtag words
       .replace(/\s+/g, " ") // Replaces multiple spaces/newlines left behind with a single space
       .trim();
+    if (!userId) return;
     const formData = new FormData();
-    formData.append("authorId", user.id);
+    formData.append("authorId", userId);
     formData.append("content", cleanContent);
     if (selectedImage) formData.append("image", selectedImage);
     if (caption) formData.append("caption", caption);
@@ -108,8 +112,8 @@ export default function CreatePostCard({ user }: CreatePostCardProps) {
       hashtags: liveHashtags,
       status: "pending",
       user: {
-        name: user?.name,
-        image: user?.image,
+        name: userName,
+        image: userImage,
       },
     });
 
@@ -148,17 +152,15 @@ export default function CreatePostCard({ user }: CreatePostCardProps) {
           {/* Header Row */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-primary/20 bg-muted shrink-0 shadow-sm">
-                <Image
-                  src={user.image || "/default-avatar.png"}
-                  alt={user.name || "User Avatar"}
-                  fill
-                  className="object-cover"
-                />
-              </div>
+              <Avatar className="h-10 w-10 border border-border">
+                <AvatarImage src={userImage || undefined} alt="User avatar" />
+                <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                  {userName?.charAt(0) || "U"}
+                </AvatarFallback>
+              </Avatar>
               <div>
                 <h4 className="text-sm font-semibold text-foreground tracking-tight">
-                  {user.name || "Developer"}
+                  {userName || "Developer"}
                 </h4>
                 <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent text-accent-foreground font-medium">

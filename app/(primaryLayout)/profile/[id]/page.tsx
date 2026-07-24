@@ -1,9 +1,8 @@
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import UserData, {
   ProfileSkeleton,
 } from "@/feature/profile/component/UserData";
-import { getSession } from "@/lib/get-session";
 
 interface PageProps {
   params: Promise<{
@@ -23,11 +22,10 @@ export default async function DevUserProfile({ params }: PageProps) {
 
 async function InternalWarper({ params }: PageProps) {
   const { id } = await params;
-  const session = await getSession();
-  const ownProfile = session?.user?.id === id;
+
   return (
     <>
-      <UserData userId={id} ownProfile={ownProfile} />
+      <UserData userId={id} />
     </>
   );
 }

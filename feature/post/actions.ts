@@ -39,7 +39,6 @@ export const createPostAction = async (
         message: "",
       };
     }
-    await new Promise((resolve) => setTimeout(resolve, 3000));
     const formData = payload as FormData;
     const authorId = formData.get("authorId") as string;
     const caption = (formData.get("caption") as string)?.trim() || null;
@@ -256,9 +255,7 @@ export const writeCommentAction = async ({
 }: WriteCommentInput) => {
   try {
     // 1. Authenticate session
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getSession();
 
     if (!session?.user?.id) {
       return {
