@@ -113,6 +113,34 @@ export async function getPostSharesCount(postId: string) {
   });
 }
 
+export async function getTotalPostsByUserId(authorId: string) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(`user-posts-${authorId}`);
+
+  return prisma.post.findMany({
+    where: {
+      authorId,
+    },
+    include: {
+      comments: true,
+      reactions: true,
+    },
+  });
+}
+
+export async function getTotalCommentsByUserId(authorId: string) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(`user-comments-${authorId}`);
+
+  return prisma.comment.findMany({
+    where: {
+      authorId,
+    },
+  });
+}
+
 export type PostArrayWithReactions = Awaited<ReturnType<typeof getAllPosts>>;
 
 export type PostWithReactions = PostArrayWithReactions[number];
@@ -120,3 +148,13 @@ export type PostWithReactions = PostArrayWithReactions[number];
 export type PostCommentsArray = Awaited<ReturnType<typeof getPostComments>>;
 
 export type PostComment = PostCommentsArray[number];
+
+export type UserPostsArray = Awaited<ReturnType<typeof getTotalPostsByUserId>>;
+
+export type UserPost = UserPostsArray[number];
+
+export type UserCommentsArray = Awaited<
+  ReturnType<typeof getTotalCommentsByUserId>
+>;
+
+export type UserComment = UserCommentsArray[number];

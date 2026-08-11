@@ -5,10 +5,7 @@ import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma"; // Adjust import according to your Prisma client path
 import { type ToastType } from "@/hooks/use-action-toast";
 import { type ReactionType } from "@/app/generated/prisma/enums";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { success } from "zod";
 import { getSession } from "@/lib/get-session";
 export type InitialState = {
   success: boolean;
@@ -119,6 +116,7 @@ export const createPostAction = async (
     // 4. Revalidate Feed Page
     revalidatePath("/");
     updateTag("posts");
+    updateTag(`user-posts-${authorId}`);
     return {
       success: true,
       message: "Your post is now live!",
@@ -166,6 +164,14 @@ export const reactPostAction = async ({
       success: false,
     };
   }
+  let post = await prisma.post.findUnique({
+    where: {
+      id: postId,
+    },
+    select: {
+      authorId: true,
+    },
+  });
 
   try {
     // 1. Check if user has an existing reaction for this post
@@ -189,6 +195,7 @@ export const reactPostAction = async ({
         },
       });
       updateTag(`post-reactions-${postId}`);
+      updateTag(`user-posts-${post?.authorId}`);
       return {
         success: true,
         action: "REMOVED",
@@ -207,7 +214,7 @@ export const reactPostAction = async ({
         },
       });
       updateTag(`post-reactions-${postId}`);
-
+      updateTag(`user-posts-${post?.authorId}`);
       return {
         success: true,
         action: "UPDATED",
@@ -226,7 +233,7 @@ export const reactPostAction = async ({
         },
       });
       updateTag(`post-reactions-${postId}`);
-
+      updateTag(`user-posts-${post?.authorId}`);
       return {
         success: true,
         action: "CREATED",
@@ -278,7 +285,7 @@ export const writeCommentAction = async ({
     // 3. Ensure post exists
     const postExists = await prisma.post.findUnique({
       where: { id: postId },
-      select: { id: true },
+      select: { id: true, authorId: true },
     });
 
     if (!postExists) {
@@ -323,7 +330,11 @@ export const writeCommentAction = async ({
     });
 
     // 6. Purge Next.js cache for post comments & counts
+
+    revalidatePath(`/profile/${postExists.authorId}`);
     updateTag(`post-comments-${postId}`);
+    updateTag(`user-posts-${postExists.authorId}`);
+    updateTag(`user-comments-${postExists.authorId}`);
 
     return {
       success: true,

@@ -123,9 +123,7 @@ export default function CommentSection({
         postId,
       });
 
-      if (res?.success) {
-        toast.success(res?.message || "Comment added!");
-      } else {
+      if (!res?.success) {
         toast.error(res?.message || "Failed to post comment.");
       }
     });
@@ -134,10 +132,10 @@ export default function CommentSection({
   return (
     <section
       id="comments"
-      className="bg-card text-card-foreground border border-border rounded-2xl p-4 sm:p-8 flex flex-col gap-6 max-w-full overflow-hidden"
+      className="bg-card text-card-foreground border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-8 flex flex-col gap-4 sm:gap-6 w-full max-w-full overflow-hidden"
     >
-      <div className="flex items-center justify-between border-b border-border pb-4">
-        <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+      <div className="flex items-center justify-between border-b border-border pb-3 sm:pb-4">
+        <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
           <MessageSquare className="w-4 h-4 text-primary" />
           Discussion ({optimisticComments.length})
         </h2>
@@ -149,31 +147,31 @@ export default function CommentSection({
           e.preventDefault();
           handleWriteComment();
         }}
-        className="flex gap-3 items-start"
+        className="flex gap-2.5 sm:gap-3 items-start"
       >
         <Image
           width={36}
           height={36}
           src={currentUserAvatar}
           alt="Current User"
-          className="w-9 h-9 rounded-full object-cover border border-border bg-muted flex-shrink-0 mt-1"
+          className="w-7 h-7 sm:w-9 sm:h-9 rounded-full object-cover border border-border bg-muted flex-shrink-0 mt-1"
         />
 
-        <div className="flex-1 relative group">
+        <div className="flex-1 min-w-0 relative group">
           <textarea
             rows={3}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Add to the discussion..."
             disabled={isPending}
-            className="w-full bg-background border border-border rounded-xl p-3 pb-12 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all resize-none disabled:opacity-60"
+            className="w-full bg-background border border-border rounded-xl p-2.5 sm:p-3 pb-11 sm:pb-12 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all resize-none disabled:opacity-60"
           />
 
-          <div className="absolute right-2.5 bottom-3.5">
+          <div className="absolute right-2 bottom-2.5 sm:right-2.5 sm:bottom-3.5">
             <button
               type="submit"
               disabled={!newComment.trim() || isPending}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:hover:bg-primary text-xs font-semibold rounded-lg transition-all shadow-sm"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:hover:bg-primary text-xs font-semibold rounded-lg transition-all shadow-sm"
             >
               {isPending ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -186,9 +184,9 @@ export default function CommentSection({
         </div>
       </form>
 
-      {/* Comment List Wrapper with Horizontal Scroll */}
-      <div className="overflow-x-auto pb-4 custom-scrollbar">
-        <div className="flex flex-col gap-6 min-w-full w-max">
+      {/* Comment List Wrapper */}
+      <div className="w-full">
+        <div className="flex flex-col gap-4 sm:gap-6 w-full">
           {commentTree.length > 0 ? (
             commentTree.map((comment) => (
               <CommentItem
@@ -297,29 +295,29 @@ function CommentItem({
   };
 
   return (
-    <div className="flex gap-3 text-xs sm:text-sm min-w-[280px] sm:min-w-[320px]">
+    <div className="flex gap-2 sm:gap-3 text-xs sm:text-sm w-full min-w-0">
       {/* Avatar */}
       <Image
         width={32}
         height={32}
         src={authorAvatar}
         alt={authorName}
-        className="w-8 h-8 rounded-full object-cover border border-border bg-muted flex-shrink-0 mt-0.5"
+        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-border bg-muted flex-shrink-0 mt-0.5"
       />
 
-      <div className="flex-1 flex flex-col gap-2 min-w-0">
+      <div className="flex-1 flex flex-col gap-1.5 sm:gap-2 min-w-0">
         {/* Comment Card Body */}
-        <div className="bg-background border border-border rounded-2xl p-3.5 flex flex-col gap-1.5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-foreground text-xs">
+        <div className="bg-background border border-border rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 flex flex-col gap-1 sm:gap-1.5 shadow-sm min-w-0">
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 truncate">
+              <span className="font-semibold text-foreground text-[11px] sm:text-xs truncate">
                 {authorName}
               </span>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground shrink-0">
                 • <PostTimestamp createdAt={comment.createdAt} />
               </span>
             </div>
-            <button className="text-muted-foreground hover:text-foreground transition-colors">
+            <button className="text-muted-foreground hover:text-foreground transition-colors shrink-0 p-0.5">
               <MoreHorizontal className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -330,13 +328,13 @@ function CommentItem({
         </div>
 
         {/* Actions Bar */}
-        <div className="flex items-center gap-4 px-1 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3 sm:gap-4 px-1 text-[11px] sm:text-xs text-muted-foreground flex-wrap">
           <button
             onClick={() => {
               setIsLiked(!isLiked);
               setLikes((prev) => (isLiked ? prev - 1 : prev + 1));
             }}
-            className={`flex items-center gap-1.5 hover:text-destructive transition-colors ${
+            className={`flex items-center gap-1 sm:gap-1.5 hover:text-destructive transition-colors ${
               isLiked ? "text-destructive font-semibold" : ""
             }`}
           >
@@ -346,7 +344,7 @@ function CommentItem({
 
           <button
             onClick={() => setShowReplyBox(!showReplyBox)}
-            className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+            className="flex items-center gap-1 sm:gap-1.5 hover:text-foreground transition-colors"
           >
             {showReplyBox ? (
               <>
@@ -365,7 +363,7 @@ function CommentItem({
           {totalRepliesCount > 0 && (
             <button
               onClick={() => setShowReplies(!showReplies)}
-              className="flex items-center gap-1 hover:text-foreground transition-colors font-medium ml-auto"
+              className="flex items-center gap-1 hover:text-foreground transition-colors font-medium sm:ml-auto"
             >
               <span>
                 {showReplies
@@ -389,7 +387,7 @@ function CommentItem({
               e.preventDefault();
               handleWriteReply();
             }}
-            className="pt-1 flex gap-2 w-full max-w-sm"
+            className="pt-1 flex gap-1.5 sm:gap-2 w-full max-w-full flex-wrap sm:flex-nowrap"
           >
             <input
               type="text"
@@ -398,12 +396,12 @@ function CommentItem({
               placeholder={`Replying to @${authorName.toLowerCase().replace(/\s+/g, "")}...`}
               disabled={isPending}
               autoFocus
-              className="flex-1 bg-background border border-border rounded-xl px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 min-w-[200px]"
+              className="flex-1 bg-background border border-border rounded-lg sm:rounded-xl px-2.5 sm:px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60 min-w-0 w-full sm:w-auto"
             />
             <button
               type="submit"
               disabled={!replyContent.trim() || isPending}
-              className="px-3 py-1.5 bg-primary text-primary-foreground rounded-xl text-xs font-semibold hover:bg-primary/90 disabled:opacity-40 transition-all inline-flex items-center gap-1 flex-shrink-0"
+              className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg sm:rounded-xl text-xs font-semibold hover:bg-primary/90 disabled:opacity-40 transition-all inline-flex items-center gap-1 shrink-0 ml-auto sm:ml-0"
             >
               {isPending && <Loader2 className="w-3 h-3 animate-spin" />}
               <span>Reply</span>
@@ -411,9 +409,9 @@ function CommentItem({
           </form>
         )}
 
-        {/* Infinite Nested Comments - Left indentation is always applied */}
+        {/* Infinite Nested Comments - Left indentation */}
         {totalRepliesCount > 0 && showReplies && (
-          <div className="flex flex-col gap-3 pt-2 pl-3 sm:pl-5 border-l border-border ml-1 sm:ml-2">
+          <div className="flex flex-col gap-2.5 sm:gap-3 pt-1.5 sm:pt-2 pl-2 sm:pl-4 border-l border-border ml-0.5 sm:ml-1">
             {comment.replies?.map((reply) => (
               <CommentItem
                 key={reply.id}

@@ -36,6 +36,26 @@ export interface UserProfileData {
 // Full return type (can be null if unauthenticated/not found)
 export type UserProfile = UserProfileData | null;
 
+export const getPopularUserIds = async () => {
+  try {
+    const posts = await prisma.user.findMany({
+      take: 3,
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return posts.map((post) => String(post.id));
+  } catch (error) {
+    console.error("Failed to fetch popular post IDs:", error);
+    // Fallback array to prevent build crashes if database is unreachable during build
+    return ["1", "2", "3"];
+  }
+};
+
 export const getUserProfile = async (userId: string) => {
   "use cache";
   cacheTag(`user-profile-${userId}`);

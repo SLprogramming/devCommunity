@@ -144,13 +144,13 @@ export function PostFooter({ initialData }: PostFooterProps) {
   const ActiveIcon = activeReactionData?.icon || ThumbsUp;
 
   return (
-    <div className="flex items-center justify-between text-muted-foreground text-sm border-t border-border/50 pt-4">
-      <div className="flex items-center gap-4">
+    <div className="flex items-center justify-between text-muted-foreground text-xs sm:text-sm border-t border-border/50 pt-3.5 sm:pt-4 gap-2 flex-wrap">
+      <div className="flex items-center gap-2.5 sm:gap-4 flex-wrap">
         {/* ================= REACTION POP-OVER CONTAINER ================= */}
         <div className="relative group/reaction flex items-center">
           {/* Hover Popover Menu */}
           <div className="absolute bottom-full left-0 hidden group-hover/reaction:block pb-2 z-50">
-            <div className="flex items-center gap-1 p-1.5 bg-popover/95 backdrop-blur-md border border-border rounded-full shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="flex items-center gap-1 p-1 sm:p-1.5 bg-popover/95 backdrop-blur-md border border-border rounded-full shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-200">
               {REACTIONS.map((reaction) => {
                 const Icon = reaction.icon;
                 return (
@@ -158,10 +158,12 @@ export function PostFooter({ initialData }: PostFooterProps) {
                     key={reaction.type}
                     disabled={isPending}
                     onClick={() => handleSelectReaction(reaction.type)}
-                    className={`p-2 rounded-full transition-all duration-200 hover:scale-125 ${reaction.hoverBg}`}
+                    className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:scale-125 ${reaction.hoverBg}`}
                     title={reaction.label}
                   >
-                    <Icon className={`h-5 w-5 ${reaction.color}`} />
+                    <Icon
+                      className={`h-4 w-4 sm:h-5 sm:w-5 ${reaction.color}`}
+                    />
                   </button>
                 );
               })}
@@ -173,18 +175,18 @@ export function PostFooter({ initialData }: PostFooterProps) {
             onClick={() =>
               handleSelectReaction(optimisticState.userReaction ? null : "LIKE")
             }
-            className={`flex items-center gap-1.5 transition-colors group/btn ${
+            className={`flex items-center gap-1 sm:gap-1.5 transition-colors group/btn ${
               activeReactionData
                 ? activeReactionData.color
                 : "hover:text-primary"
             }`}
           >
             <ActiveIcon
-              className={`h-4 w-4 group-hover/btn:scale-110 transition-transform ${
+              className={`h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover/btn:scale-110 transition-transform ${
                 optimisticState.userReaction === "LOVE" ? "fill-rose-500" : ""
               }`}
             />
-            <span className="font-medium">
+            <span className="font-medium text-xs sm:text-sm">
               {activeReactionData ? activeReactionData.label : "Like"} (
               {formatCount(optimisticState.reactionCount)})
             </span>
@@ -194,10 +196,12 @@ export function PostFooter({ initialData }: PostFooterProps) {
         {/* ================= COMMENTS BUTTON ================= */}
         <Link
           href={`/post/${initialData.postId}`}
-          className="flex items-center gap-1.5 hover:text-primary transition-colors group/btn"
+          className="flex items-center gap-1 sm:gap-1.5 hover:text-primary transition-colors group/btn"
         >
-          <MessageSquare className="h-4 w-4 group-hover/btn:scale-110 transition-transform" />
-          <span>{formatCount(initialData?.comments ?? 0)}</span>
+          <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover/btn:scale-110 transition-transform" />
+          <span className="text-xs sm:text-sm">
+            {formatCount(initialData?.comments ?? 0)}
+          </span>
         </Link>
 
         {/* ================= SHARE BUTTON ================= */}
@@ -210,17 +214,19 @@ export function PostFooter({ initialData }: PostFooterProps) {
               toast.success("Copied to clipboard!");
             }
           }}
-          className="flex items-center gap-1.5 hover:text-primary transition-colors group/btn"
+          className="flex items-center gap-1 sm:gap-1.5 hover:text-primary transition-colors group/btn"
           title="Share post"
         >
-          <Share2 className="h-4 w-4 group-hover/btn:scale-110 transition-transform" />
-          <span>{formatCount(initialData?.share ?? 0)}</span>
+          <Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover/btn:scale-110 transition-transform" />
+          <span className="text-xs sm:text-sm">
+            {formatCount(initialData?.share ?? 0)}
+          </span>
         </button>
       </div>
 
       {/* ================= VIEWS COUNTER ================= */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground/80">
-        <Eye className="h-3.5 w-3.5" />
+      <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-muted-foreground/80 shrink-0">
+        <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
         <span>{formatCount(initialData?.views ?? 0)}</span>
       </div>
     </div>

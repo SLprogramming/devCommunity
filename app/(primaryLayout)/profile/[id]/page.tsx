@@ -1,8 +1,10 @@
+"use cache";
 import { Suspense } from "react";
 
 import UserData, {
   ProfileSkeleton,
 } from "@/feature/profile/component/UserData";
+import { getPopularUserIds } from "@/feature/profile/queries";
 
 interface PageProps {
   params: Promise<{
@@ -10,9 +12,16 @@ interface PageProps {
   }>;
 }
 
+export async function generateStaticParams() {
+  const userIds = await getPopularUserIds();
+  return userIds.map((id) => ({
+    id,
+  }));
+}
+
 export default async function DevUserProfile({ params }: PageProps) {
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6 p-4">
+    <div className="max-w-4xl mx-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-6">
       <Suspense fallback={<ProfileSkeleton />}>
         <InternalWarper params={params} />
       </Suspense>

@@ -7,18 +7,20 @@ import {
   Terminal,
   Layers,
   Award,
-  Heart,
-  MessageSquare,
-  FileText,
 } from "lucide-react";
 
 import { getUserProfile } from "@/feature/profile/queries";
 import { notFound, redirect } from "next/navigation";
-
 import { createProfileAction } from "@/feature/profile/actions";
 import Image from "next/image";
-import Link from "next/link";
 import ProfileButtons from "./ProfileButtons";
+import ProfileStats from "./ProfileStats";
+import {
+  getTotalCommentsByUserId,
+  getTotalPostsByUserId,
+} from "@/feature/post/queries";
+import ProfileStatsWarper from "./ProfileStatsWarper";
+
 export default async function UserData({ userId: id }: { userId: string }) {
   const user = await getUserProfile(id);
 
@@ -28,224 +30,174 @@ export default async function UserData({ userId: id }: { userId: string }) {
 
   if (!user) notFound();
 
-  // Mock data for developer metrics
-  const stats = [
-    { label: "Posts Created", value: "24", icon: FileText },
-    { label: "Total Likes", value: "1.2k", icon: Heart },
-    { label: "Discussions", value: "184", icon: MessageSquare },
-  ];
-
   return (
     <>
-      {/* Profile Header Card */}
-      <div className="bg-card text-card-foreground border border-border rounded-2xl overflow-hidden relative">
-        {/* Soft Background Accent Banner */}
-        <div className="h-32 bg-gradient-to-r from-primary/10 via-muted to-primary/5 border-b border-border/40" />
+      <>
+        {/* Profile Header Card */}
+        <div className="bg-card text-card-foreground border border-border rounded-xl sm:rounded-2xl overflow-hidden relative">
+          {/* Soft Background Accent Banner */}
+          <div className="h-24 sm:h-32 bg-gradient-to-r from-primary/10 via-muted to-primary/5 border-b border-border/40" />
 
-        <div className="p-6 pt-0 relative flex flex-col sm:flex-row justify-between items-start gap-4">
-          {/* Avatar and Info Placement */}
-          <div className="flex flex-col sm:flex-row gap-4 -mt-12 items-start sm:items-end">
-            <Image
-              width={96}
-              height={96}
-              src={
-                user?.image ||
-                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"
-              }
-              alt={user?.name || "User Avatar"}
-              className="w-24 h-24 rounded-2xl object-cover border-4 border-card bg-card shadow-md"
-            />
-            <div className="mb-1">
-              <h1 className="text-2xl font-bold text-foreground leading-tight">
-                {user?.name || "User Name"}
-              </h1>
-              <p className="text-sm text-muted-foreground">@{user?.name}</p>
+          <div className="p-4 sm:p-6 pt-0 relative flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4">
+            {/* Avatar and Info Placement */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 -mt-10 sm:-mt-12 items-start sm:items-end min-w-0 w-full sm:w-auto">
+              <Image
+                width={96}
+                height={96}
+                src={
+                  user?.image ||
+                  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"
+                }
+                alt={user?.name || "User Avatar"}
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-4 border-card bg-card shadow-md shrink-0"
+              />
+              <div className="mb-0 sm:mb-1 min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-tight truncate">
+                  {user?.name || "User Name"}
+                </h1>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                  @{user?.name}
+                </p>
+              </div>
             </div>
+
+            {/* Conditional Edit Action — Rendered ONLY for Profile Owner */}
+            <ProfileButtons userId={id} />
           </div>
 
-          {/* Conditional Edit Action — Rendered ONLY for Profile Owner */}
-          <ProfileButtons userId={id} />
-        </div>
-
-        {/* Detailed Metadata Footer */}
-        <div className="px-6 pb-6 pt-2 border-t border-border/30 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-primary" />
-            <span>{user?.profile?.jobTitle || "Developer"}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5" />
-            <span>{user?.profile?.address || "Remote"}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <LinkIcon className="w-3.5 h-3.5" />
-            {user?.profile?.githubLink ? (
-              <a
-                href={user.profile.githubLink}
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                {user.profile.githubLink}
-              </a>
-            ) : (
-              <span>No link added</span>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 ml-auto">
-            <Calendar className="w-3.5 h-3.5" />
-            <span>
-              {user?.profile?.createdAt
-                ? new Date(user.profile.createdAt).toLocaleDateString()
-                : "Joined recently"}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Grid Split */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Hand: About & Skills Panels */}
-        <div className="flex flex-col gap-6">
-          {/* Bio Card */}
-          <div className="bg-card text-card-foreground border border-border rounded-2xl p-5 flex flex-col gap-3">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Award className="w-4 h-4 text-primary" /> About Me
-            </h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {user?.profile?.bio || "This user has not added a bio yet."}
-            </p>
-            <div className="flex gap-3 pt-2 border-t border-border/40 text-muted-foreground">
-              <a href="#" className="hover:text-primary transition-colors">
-                <Terminal className="w-4 h-4" />
-              </a>
-              <a href="#" className="hover:text-primary transition-colors">
-                <Send className="w-4 h-4" />
-              </a>
+          {/* Detailed Metadata Footer */}
+          <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-3 border-t border-border/30 flex flex-wrap gap-x-4 sm:gap-x-6 gap-y-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Layers className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="truncate">
+                {user?.profile?.jobTitle || "Developer"}
+              </span>
             </div>
-          </div>
-
-          {/* Skills / Tech Stack Card */}
-          <div className="bg-card text-card-foreground border border-border rounded-2xl p-5 flex flex-col gap-3">
-            <h3 className="text-sm font-semibold text-foreground">
-              Tech Stack
-            </h3>
-            <div className="flex flex-wrap gap-1.5">
-              {user?.profile?.techStack && user.profile.techStack.length > 0 ? (
-                user.profile.techStack.map((skill) => (
-                  <span
-                    key={skill?.id}
-                    className="text-xs bg-muted text-muted-foreground border border-border px-2.5 py-1 rounded-lg"
-                  >
-                    {skill?.name}
-                  </span>
-                ))
+            <div className="flex items-center gap-1.5 shrink-0">
+              <MapPin className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">
+                {user?.profile?.address || "Remote"}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 min-w-0 max-w-full sm:max-w-xs">
+              <LinkIcon className="w-3.5 h-3.5 shrink-0" />
+              {user?.profile?.githubLink ? (
+                <a
+                  href={user.profile.githubLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-primary transition-colors truncate"
+                >
+                  {user.profile.githubLink}
+                </a>
               ) : (
-                <span className="text-xs text-muted-foreground italic">
-                  No tech stack added yet.
-                </span>
+                <span className="truncate">No link added</span>
               )}
             </div>
+            <div className="flex items-center gap-1.5 sm:ml-auto shrink-0">
+              <Calendar className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {user?.profile?.createdAt
+                  ? new Date(user.profile.createdAt).toLocaleDateString()
+                  : "Joined recently"}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Right Hand: Statistics & Activity tabs */}
-        <div className="md:col-span-2 flex flex-col gap-6">
-          {/* Stats Analytics Header Grid */}
-          <div className="grid grid-cols-3 gap-4">
-            {stats.map((stat, idx) => {
-              const IconComponent = stat.icon;
-              return (
-                <div
-                  key={idx}
-                  className="bg-card text-card-foreground border border-border rounded-2xl p-4 flex flex-col gap-1.5"
-                >
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span className="text-xs font-medium hidden sm:inline">
-                      {stat.label}
+        {/* Main Grid Split */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          {/* Left Hand: About & Skills Panels */}
+          <div className="flex flex-col gap-4 sm:gap-6">
+            {/* Bio Card */}
+            <div className="bg-card text-card-foreground border border-border rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3">
+              <h3 className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-2">
+                <Award className="w-4 h-4 text-primary shrink-0" /> About Me
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed break-words">
+                {user?.profile?.bio || "This user has not added a bio yet."}
+              </p>
+              <div className="flex gap-3 pt-2 border-t border-border/40 text-muted-foreground">
+                <a href="#" className="hover:text-primary transition-colors">
+                  <Terminal className="w-4 h-4" />
+                </a>
+                <a href="#" className="hover:text-primary transition-colors">
+                  <Send className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+
+            {/* Skills / Tech Stack Card */}
+            <div className="bg-card text-card-foreground border border-border rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3">
+              <h3 className="text-xs sm:text-sm font-semibold text-foreground">
+                Tech Stack
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {user?.profile?.techStack &&
+                user.profile.techStack.length > 0 ? (
+                  user.profile.techStack.map((skill) => (
+                    <span
+                      key={skill?.id}
+                      className="text-[11px] sm:text-xs bg-muted text-muted-foreground border border-border px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg"
+                    >
+                      {skill?.name}
                     </span>
-                    <span className="text-xs font-medium sm:hidden">
-                      {stat.label.split(" ")[0]}
-                    </span>
-                    <IconComponent className="w-4 h-4 text-muted-foreground/70" />
-                  </div>
-                  <span className="text-2xl font-bold text-foreground tracking-tight">
-                    {stat.value}
+                  ))
+                ) : (
+                  <span className="text-xs text-muted-foreground italic">
+                    No tech stack added yet.
                   </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* User History/Activity Feed Filter Container */}
-          <div className="flex flex-col gap-4">
-            <div className="flex gap-4 border-b border-border pb-2">
-              <button className="text-sm font-semibold text-foreground border-b-2 border-primary pb-2 px-1">
-                Recent Posts
-              </button>
-              <button className="text-sm font-medium text-muted-foreground hover:text-foreground pb-2 px-1 transition-colors">
-                Comments
-              </button>
-              <button className="text-sm font-medium text-muted-foreground hover:text-foreground pb-2 px-1 transition-colors">
-                Bookmarks
-              </button>
-            </div>
-
-            {/* Empty Context Placeholder for Activity */}
-            <div className="border border-dashed border-border rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-2">
-              <p className="text-sm font-medium text-foreground">
-                No recent activity found
-              </p>
-              <p className="text-xs text-muted-foreground max-w-xs">
-                Articles published or shared contributions will populate
-                directly into this pipeline feed.
-              </p>
+                )}
+              </div>
             </div>
           </div>
+
+          <ProfileStatsWarper id={id} />
         </div>
-      </div>
+      </>
     </>
   );
 }
+
 // app/(primaryLayout)/profile/loading.tsx or components/ProfileSkeleton.tsx
 
 export async function ProfileSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="space-y-4 sm:space-y-6 animate-pulse w-full max-w-full overflow-hidden">
       {/* Profile Header Card Skeleton */}
-      <div className="bg-card border border-border rounded-2xl overflow-hidden relative">
+      <div className="bg-card border border-border rounded-xl sm:rounded-2xl overflow-hidden relative">
         {/* Banner */}
-        <div className="h-32 bg-muted/40 border-b border-border/40" />
+        <div className="h-24 sm:h-32 bg-muted/40 border-b border-border/40" />
 
-        <div className="p-6 pt-0 relative flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div className="p-4 sm:p-6 pt-0 relative flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4">
           {/* Avatar and Name Placement */}
-          <div className="flex flex-col sm:flex-row gap-4 -mt-12 items-start sm:items-end">
-            <div className="w-24 h-24 rounded-2xl bg-muted border-4 border-card shadow-md" />
-            <div className="mb-1 space-y-2 pb-1">
-              <div className="h-6 w-40 bg-muted rounded-md" />
-              <div className="h-4 w-24 bg-muted/60 rounded-md" />
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 -mt-10 sm:-mt-12 items-start sm:items-end w-full sm:w-auto">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-muted border-4 border-card shadow-md shrink-0" />
+            <div className="mb-0 sm:mb-1 space-y-2 pb-1 w-full sm:w-auto">
+              <div className="h-5 sm:h-6 w-36 sm:w-40 bg-muted rounded-md" />
+              <div className="h-3.5 sm:h-4 w-20 sm:w-24 bg-muted/60 rounded-md" />
             </div>
           </div>
 
-          {/* Edit Button */}
-          <div className="h-8 w-24 bg-muted rounded-xl sm:mt-4 self-stretch sm:self-auto" />
+          {/* Edit Button Placeholder */}
+          <div className="h-8 w-full sm:w-24 bg-muted rounded-xl sm:mt-4 self-stretch sm:self-auto shrink-0" />
         </div>
 
         {/* Detailed Metadata Footer */}
-        <div className="px-6 pb-6 pt-4 border-t border-border/30 flex flex-wrap gap-x-6 gap-y-2">
-          <div className="h-4 w-28 bg-muted/60 rounded-md" />
-          <div className="h-4 w-32 bg-muted/60 rounded-md" />
-          <div className="h-4 w-36 bg-muted/60 rounded-md" />
-          <div className="h-4 w-24 bg-muted/40 rounded-md ml-auto" />
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-3 sm:pt-4 border-t border-border/30 flex flex-wrap gap-x-4 sm:gap-x-6 gap-y-2">
+          <div className="h-3.5 sm:h-4 w-24 sm:w-28 bg-muted/60 rounded-md shrink-0" />
+          <div className="h-3.5 sm:h-4 w-28 sm:w-32 bg-muted/60 rounded-md shrink-0" />
+          <div className="h-3.5 sm:h-4 w-32 sm:w-36 bg-muted/60 rounded-md shrink-0" />
+          <div className="h-3.5 sm:h-4 w-20 sm:w-24 bg-muted/40 rounded-md sm:ml-auto shrink-0" />
         </div>
       </div>
 
       {/* Main Grid Split */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         {/* Left Hand Panel */}
-        <div className="flex flex-col gap-6">
-          {/* About Me Card */}
-          <div className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3">
+        <div className="flex flex-col gap-4 sm:gap-6">
+          {/* About Me Card Skeleton */}
+          <div className="bg-card border border-border rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3">
             <div className="h-4 w-24 bg-muted rounded-md" />
             <div className="space-y-2">
               <div className="h-3.5 w-full bg-muted/60 rounded-md" />
@@ -254,8 +206,8 @@ export async function ProfileSkeleton() {
             </div>
           </div>
 
-          {/* Tech Stack Card */}
-          <div className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3">
+          {/* Tech Stack Card Skeleton */}
+          <div className="bg-card border border-border rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3">
             <div className="h-4 w-20 bg-muted rounded-md" />
             <div className="flex flex-wrap gap-1.5">
               <div className="h-6 w-14 bg-muted rounded-lg" />
@@ -267,35 +219,35 @@ export async function ProfileSkeleton() {
         </div>
 
         {/* Right Hand Panel */}
-        <div className="md:col-span-2 flex flex-col gap-6">
-          {/* Stats Analytics Grid */}
-          <div className="grid grid-cols-3 gap-4">
+        <div className="md:col-span-2 flex flex-col gap-4 sm:gap-6 min-w-0">
+          {/* Stats Analytics Grid Skeleton */}
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-2.5"
+                className="bg-card border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col gap-2 min-w-0"
               >
-                <div className="flex items-center justify-between">
-                  <div className="h-3 w-16 bg-muted/70 rounded-md" />
-                  <div className="w-4 h-4 bg-muted/50 rounded-md" />
+                <div className="flex items-center justify-between gap-1">
+                  <div className="h-3 w-12 sm:w-16 bg-muted/70 rounded-md shrink-0" />
+                  <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-muted/50 rounded-md shrink-0" />
                 </div>
-                <div className="h-7 w-10 bg-muted rounded-md" />
+                <div className="h-6 sm:h-7 w-8 sm:w-10 bg-muted rounded-md" />
               </div>
             ))}
           </div>
 
-          {/* Activity Feed Container */}
+          {/* Activity Feed Container Skeleton */}
           <div className="flex flex-col gap-4">
-            <div className="flex gap-4 border-b border-border pb-2">
-              <div className="h-4 w-20 bg-muted rounded-md pb-2" />
-              <div className="h-4 w-16 bg-muted/50 rounded-md pb-2" />
-              <div className="h-4 w-20 bg-muted/50 rounded-md pb-2" />
+            <div className="flex gap-4 border-b border-border pb-2 overflow-x-auto no-scrollbar">
+              <div className="h-4 w-20 bg-muted rounded-md shrink-0" />
+              <div className="h-4 w-16 bg-muted/50 rounded-md shrink-0" />
+              <div className="h-4 w-20 bg-muted/50 rounded-md shrink-0" />
             </div>
 
-            {/* Empty Context Box */}
-            <div className="border border-dashed border-border rounded-2xl p-12 flex flex-col items-center justify-center gap-3">
+            {/* Empty Context Box Placeholder */}
+            <div className="border border-dashed border-border rounded-xl sm:rounded-2xl p-8 sm:p-12 flex flex-col items-center justify-center gap-2 sm:gap-3 text-center">
               <div className="h-4 w-36 bg-muted rounded-md" />
-              <div className="h-3 w-56 bg-muted/60 rounded-md" />
+              <div className="h-3 w-48 sm:w-56 bg-muted/60 rounded-md" />
             </div>
           </div>
         </div>
