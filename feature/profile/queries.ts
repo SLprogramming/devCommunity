@@ -68,6 +68,8 @@ export const getUserProfile = async (userId: string) => {
           techStack: true,
         },
       },
+      followers: true,
+      following: true,
     },
   });
 

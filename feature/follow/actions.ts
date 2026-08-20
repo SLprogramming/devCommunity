@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { getSession } from "@/lib/get-session";
 import { prisma } from "@/lib/prisma";
 
@@ -59,7 +59,9 @@ export const followUserAction = async (
       });
 
       revalidatePath(`/profile/${userId}`);
-      revalidatePath("/feed");
+      revalidatePath(`/profile/${currentUserId}`);
+      updateTag(`user-profile-${userId}`);
+      updateTag(`user-profile-${currentUserId}`);
 
       return {
         success: true,
@@ -76,7 +78,9 @@ export const followUserAction = async (
       });
 
       revalidatePath(`/profile/${userId}`);
-      revalidatePath("/feed");
+      revalidatePath(`/profile/${currentUserId}`);
+      updateTag(`user-profile-${userId}`);
+      updateTag(`user-profile-${currentUserId}`);
 
       return {
         success: true,
@@ -94,3 +98,24 @@ export const followUserAction = async (
     };
   }
 };
+
+export async function getIsFollowingAction(
+  targetUserId: string,
+): Promise<boolean> {
+  const session = await getSession();
+  const currentUserId = session?.user?.id;
+
+  if (!currentUserId || currentUserId === targetUserId) return false;
+
+  const follow = await prisma.follow.findUnique({
+    where: {
+      followerId_followingId: {
+        followerId: currentUserId,
+        followingId: targetUserId,
+      },
+    },
+    select: { followerId: true },
+  });
+
+  return !!follow;
+}

@@ -1,10 +1,10 @@
-"use cache";
 import { Suspense } from "react";
 
 import UserData, {
   ProfileSkeleton,
 } from "@/feature/profile/component/UserData";
 import { getPopularUserIds } from "@/feature/profile/queries";
+import { getSession } from "@/lib/get-session";
 
 interface PageProps {
   params: Promise<{
@@ -31,7 +31,6 @@ export default async function DevUserProfile({ params }: PageProps) {
 
 async function InternalWarper({ params }: PageProps) {
   const { id } = await params;
-
   return (
     <>
       <UserData userId={id} />
