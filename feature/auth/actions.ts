@@ -92,7 +92,6 @@ export const signUpAction = async (
     };
   }
   try {
-
     let { username, email, password, confirmPassword } = parseData.data;
     let userExist = await prisma.user.findUnique({
       where: { email },
@@ -225,9 +224,9 @@ export const signOutAction = async () => {
       headers: await headers(),
       asResponse: true,
     });
-    
+
     console.log("logout response:", res);
-    
+
     if (res && res.ok) {
       isSuccess = true;
     }
@@ -238,10 +237,8 @@ export const signOutAction = async () => {
 
   if (isSuccess) {
     // 1. Force Next.js to purge the server-side layout cache for your TopBar
-    revalidatePath("/"); 
-    
-    // 2. Safely redirect the user outside the try/catch block
-    // redirect("/login");
+    revalidatePath("/", "layout");
+    redirect("/");
   }
 };
 
@@ -415,4 +412,3 @@ export const resetPasswordAction = async (
     };
   }
 };
-

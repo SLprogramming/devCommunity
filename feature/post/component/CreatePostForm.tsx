@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import { fileToBase64 } from "@/utils/helper";
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { extractHashtags } from "@/utils/helper";
@@ -56,10 +57,12 @@ export default function CreatePostCard() {
   //   }
   // }, [state]);
 
-  const handleImageFile = (file: File) => {
+  const handleImageFile = async (file: File) => {
     if (file && file.type.startsWith("image/")) {
       setSelectedImage(file);
-      setImagePreview(URL.createObjectURL(file));
+      const base64String = await fileToBase64(file);
+      setImagePreview(base64String);
+
       if (!isExpanded) setIsExpanded(true);
     }
   };

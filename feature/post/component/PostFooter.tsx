@@ -195,7 +195,7 @@ export function PostFooter({ initialData }: PostFooterProps) {
 
         {/* ================= COMMENTS BUTTON ================= */}
         <Link
-          href={`/post/${initialData.postId}`}
+          href={`/post/${initialData.postId}#comments`}
           className="flex items-center gap-1 sm:gap-1.5 hover:text-primary transition-colors group/btn"
         >
           <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover/btn:scale-110 transition-transform" />

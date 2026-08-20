@@ -21,6 +21,7 @@ import {
 import { useState, useEffect } from "react";
 import { usePostQueue } from "../store";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 function useSimulatedProgress(isPending: boolean) {
   const [progress, setProgress] = useState(12);
 
@@ -99,15 +100,18 @@ function PendingPostCard({ item }: { item: any }) {
 
       {/* Optional Image Uploading Preview with Centered Loader */}
       {item?.imagePreview && (
-        <div className="mb-4 overflow-hidden rounded-lg sm:rounded-xl border border-border bg-muted/30 relative max-h-72 sm:max-h-96">
-          <img
+        <div className="relative mb-4 h-72 sm:h-96 w-full overflow-hidden rounded-lg sm:rounded-xl border border-border bg-muted/30">
+          <Image
+            fill
+            priority
             src={item.imagePreview}
             alt="Uploading preview"
-            className="w-full max-h-72 sm:max-h-96 object-cover brightness-95"
+            className="object-cover brightness-95"
+            sizes="(max-width: 640px) 100vw, 512px"
           />
-          <div className="absolute inset-0 bg-background/30 backdrop-blur-[2px] flex flex-col items-center justify-center gap-1.5 sm:gap-2">
-            <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-spin" />
-            <span className="text-[11px] sm:text-xs font-medium text-foreground bg-background/80 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-border shadow-sm">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1.5 bg-background/30 backdrop-blur-[2px] sm:gap-2">
+            <Loader2 className="h-6 w-6 animate-spin text-primary sm:h-8 sm:w-8" />
+            <span className="rounded-full border border-border bg-background/80 px-2 py-0.5 text-[11px] font-medium text-foreground shadow-sm sm:px-2.5 sm:py-1 sm:text-xs">
               {progress}% uploaded
             </span>
           </div>

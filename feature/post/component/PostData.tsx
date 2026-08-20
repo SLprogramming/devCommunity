@@ -5,22 +5,23 @@ import Link from "next/link";
 import { PostTimestamp } from "./PostTimestamp";
 import PostFooterWarper from "@/feature/post/component/PostFooterWarper";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Image from "next/image";
 
 export default async function PostsData() {
   "use cache";
-  cacheLife("hours");
+  // cacheLife("hours");
   // Mock data for the feed
   const posts = await getAllPosts();
 
   return (
     <>
-      <>
-        <PostCreateQueue />
-        {/* Posts List */}
-        {posts?.reverse().map((post) => (
+      <PostCreateQueue />
+      {/* Posts List */}
+      <div className="w-full max-w-3xl divide-y divide-border">
+        {posts?.reverse().map((post, index) => (
           <article
             key={post.id}
-            className="bg-card w-full max-w-3xl text-card-foreground border border-border rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:border-muted-foreground/30 transition-all hover:shadow-xl hover:shadow-black/5 group cursor-pointer min-w-0"
+            className="w-full text-card-foreground py-5 sm:py-6 group min-w-0"
           >
             <Link
               href={`/profile/${post?.author?.id}`}
@@ -57,11 +58,14 @@ export default async function PostsData() {
 
               {/* Optional Post Image */}
               {post.imageUrl && (
-                <div className="mb-4 overflow-hidden rounded-lg sm:rounded-xl border border-border bg-muted/30">
-                  <img
+                <div className="relative mb-4 h-72 sm:h-96 w-full overflow-hidden rounded-lg sm:rounded-xl border border-border bg-muted/30">
+                  <Image
+                    fill
+                    priority={index === 0} // Prioritize the first post's image for faster loading
                     src={post.imageUrl}
                     alt={post.caption || "Post image"}
-                    className="w-full max-h-72 sm:max-h-96 object-cover group-hover:scale-[1.01] transition-transform duration-300"
+                    className="object-cover transition-transform duration-300 group-hover:scale-[1.01]"
+                    sizes="(max-width: 640px) 100vw, 512px"
                   />
                 </div>
               )}
@@ -82,14 +86,14 @@ export default async function PostsData() {
             <PostFooterWarper postId={post.id} />
           </article>
         ))}
-      </>
+      </div>
     </>
   );
 }
 
 function PostSkeleton() {
   return (
-    <article className="bg-card w-full max-w-3xl text-card-foreground border border-border rounded-xl sm:rounded-2xl p-4 sm:p-6 animate-pulse min-w-0">
+    <article className="w-full text-card-foreground py-5 sm:py-6 animate-pulse min-w-0">
       {/* 1. Author Header Skeleton */}
       <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4 min-w-0">
         {/* Avatar */}
@@ -139,7 +143,7 @@ function PostSkeleton() {
 // Convenient Feed Skeleton List
 export function PostFeedSkeleton({ count = 3 }: { count?: number }) {
   return (
-    <div className="flex flex-col gap-3 sm:gap-4 w-full min-w-0">
+    <div className="w-full max-w-3xl divide-y divide-border min-w-0">
       {Array.from({ length: count }).map((_, index) => (
         <PostSkeleton key={index} />
       ))}

@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   experimental: {
     preloadEntriesOnStart: false,
     webpackMemoryOptimizations: true,
+    serverActions: {
+      bodySizeLimit: "4mb",
+    },
   },
   images: {
     remotePatterns: [

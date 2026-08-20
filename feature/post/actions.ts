@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 import { prisma } from "@/lib/prisma"; // Adjust import according to your Prisma client path
 import { type ToastType } from "@/hooks/use-action-toast";
 import { type ReactionType } from "@/app/generated/prisma/enums";
@@ -14,6 +14,11 @@ export type InitialState = {
   data?: any;
   toast?: ToastType;
   redirectTo?: string;
+};
+
+export type TogglePublishPostInput = {
+  postId: string;
+  published?: boolean;
 };
 
 export type WriteCommentInput = {
@@ -36,15 +41,15 @@ export const createPostAction = async (
         message: "",
       };
     }
+    const session = await getSession();
     const formData = payload as FormData;
-    const authorId = formData.get("authorId") as string;
+    const authorId = session?.user?.id;
     const caption = (formData.get("caption") as string)?.trim() || null;
     const content = (formData.get("content") as string)?.trim() || null;
     const hashTagsRaw = formData.get("hashtags") as string;
     const hashTags: string[] = hashTagsRaw ? JSON.parse(hashTagsRaw) : [];
     const image = formData.get("image") as File | null;
 
-    // 1. Basic Payload Validation
     if (!authorId) {
       return {
         success: false,
@@ -69,7 +74,21 @@ export const createPostAction = async (
       };
     }
 
-    // 2. Upload Image to Vercel Blob (if image exists and has content)
+    // 2. Image Size Check (Max 2MB)
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB in bytes
+    if (image && image.size > MAX_FILE_SIZE) {
+      return {
+        success: false,
+        message: "Image size exceeds the 2 MB limit.",
+        toast: {
+          type: "error",
+          message: "Image is too large. Maximum allowed size is 2 MB.",
+          timestamp: Date.now(),
+        },
+      };
+    }
+
+    // 3. Upload Image to Vercel Blob (if image exists and has content)
     let imageUrl: string | null = null;
     if (image && image.size > 0) {
       const blob = await put(`posts/${Date.now()}-${image.name}`, image, {
@@ -87,7 +106,7 @@ export const createPostAction = async (
       ),
     );
 
-    // 3. Save Post & Link/Create Hashtags in Database atomically
+    // 4. Save Post & Link/Create Hashtags in Database atomically
     const newPost = await prisma.post.create({
       data: {
         authorId,
@@ -113,7 +132,7 @@ export const createPostAction = async (
       },
     });
 
-    // 4. Revalidate Feed Page
+    // 5. Revalidate Feed Page
     revalidatePath("/");
     updateTag("posts");
     updateTag(`user-posts-${authorId}`);
@@ -346,6 +365,227 @@ export const writeCommentAction = async ({
     return {
       success: false,
       message: "Something went wrong while posting your comment.",
+    };
+  }
+};
+
+export type DeletePostInput = {
+  postId: string;
+};
+
+export const deletePostAction = async ({
+  postId,
+}: DeletePostInput): Promise<InitialState> => {
+  try {
+    // 1. Authenticate session
+    const session = await getSession();
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        message: "Unauthorized. Please log in.",
+        toast: {
+          type: "error",
+          message: "You must be logged in to delete a post.",
+          timestamp: Date.now(),
+        },
+      };
+    }
+
+    if (!postId) {
+      return {
+        success: false,
+        message: "Post ID is required.",
+      };
+    }
+
+    // 2. Fetch post to check ownership & get imageUrl
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: {
+        id: true,
+        authorId: true,
+        imageUrl: true,
+      },
+    });
+
+    if (!post) {
+      return {
+        success: false,
+        message: "Post not found.",
+        toast: {
+          type: "error",
+          message: "Post not found or already deleted.",
+          timestamp: Date.now(),
+        },
+      };
+    }
+
+    // 3. Authorization Check: Only author can delete
+    if (post.authorId !== session.user.id) {
+      return {
+        success: false,
+        message: "Forbidden. You can only delete your own posts.",
+        toast: {
+          type: "error",
+          message: "You do not have permission to delete this post.",
+          timestamp: Date.now(),
+        },
+      };
+    }
+
+    // 4. Delete associated image from Vercel Blob if present
+    if (post.imageUrl) {
+      try {
+        await del(post.imageUrl);
+      } catch (blobError) {
+        // Log blob error but continue deleting record from DB
+        console.error("Failed to delete image from Vercel Blob:", blobError);
+      }
+    }
+
+    // 5. Delete post from database
+    await prisma.post.delete({
+      where: { id: postId },
+    });
+
+    // 6. Purge Cache & Tags
+    revalidatePath("/");
+    revalidatePath(`/profile/${post.authorId}`, "layout");
+    updateTag("posts");
+    updateTag(`user-posts-${post.authorId}`);
+    updateTag(`post-comments-${postId}`);
+    updateTag(`post-reactions-${postId}`);
+
+    return {
+      success: true,
+      message: "Post deleted successfully.",
+      toast: {
+        type: "success",
+        message: "Post has been deleted.",
+        timestamp: Date.now(),
+      },
+    };
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    return {
+      success: false,
+      message: "Failed to delete post.",
+      error: error instanceof Error ? error.message : "Unknown error",
+      toast: {
+        type: "error",
+        message: "Something went wrong while deleting the post.",
+        timestamp: Date.now(),
+      },
+    };
+  }
+};
+
+export const togglePublishPostAction = async ({
+  postId,
+  published,
+}: TogglePublishPostInput): Promise<InitialState> => {
+  try {
+    // 1. Authenticate Session
+    const session = await getSession();
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        message: "Unauthorized. Please log in.",
+        toast: {
+          type: "error",
+          message: "You must be logged in to modify post status.",
+          timestamp: Date.now(),
+        },
+      };
+    }
+
+    if (!postId) {
+      return {
+        success: false,
+        message: "Post ID is required.",
+      };
+    }
+
+    // 2. Fetch Post to Verify Ownership & Get Current Published State
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: {
+        id: true,
+        authorId: true,
+        published: true,
+      },
+    });
+
+    if (!post) {
+      return {
+        success: false,
+        message: "Post not found.",
+        toast: {
+          type: "error",
+          message: "Post not found.",
+          timestamp: Date.now(),
+        },
+      };
+    }
+
+    // 3. Ownership Check
+    if (post.authorId !== session.user.id) {
+      return {
+        success: false,
+        message: "Forbidden. You can only update your own posts.",
+        toast: {
+          type: "error",
+          message: "You do not have permission to update this post.",
+          timestamp: Date.now(),
+        },
+      };
+    }
+
+    // Determine target published state (toggle if boolean not explicitly supplied)
+    const nextPublishedState =
+      typeof published === "boolean" ? published : !post.published;
+
+    // 4. Update Database Record
+    const updatedPost = await prisma.post.update({
+      where: { id: postId },
+      data: {
+        published: nextPublishedState,
+      },
+    });
+
+    // 5. Purge Cache & Revalidate Tags
+    revalidatePath("/");
+    revalidatePath(`/post/${postId}`);
+    revalidatePath(`/profile/${post.authorId}`, "layout");
+    updateTag("posts");
+    updateTag(`post-${postId}`);
+    updateTag(`user-posts-${post.authorId}`);
+
+    const actionText = nextPublishedState ? "published" : "unpublished";
+
+    return {
+      success: true,
+      message: `Post successfully ${actionText}.`,
+      data: updatedPost,
+      toast: {
+        type: "success",
+        message: `Post has been ${actionText}.`,
+        timestamp: Date.now(),
+      },
+    };
+  } catch (error) {
+    console.error("Error toggling publish status:", error);
+    return {
+      success: false,
+      message: "Failed to update publish status.",
+      error: error instanceof Error ? error.message : "Unknown error",
+      toast: {
+        type: "error",
+        message: "Something went wrong while updating the post status.",
+        timestamp: Date.now(),
+      },
     };
   }
 };

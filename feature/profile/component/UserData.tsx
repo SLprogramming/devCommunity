@@ -56,7 +56,7 @@ export default async function UserData({ userId: id }: { userId: string }) {
                   {user?.name || "User Name"}
                 </h1>
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  @{user?.name}
+                  {user?.email || "user@example.com"}
                 </p>
               </div>
             </div>

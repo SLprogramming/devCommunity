@@ -8,6 +8,9 @@ export const getAllPosts = async () => {
   cacheTag("posts");
   console.log("getting all post");
   const posts = await prisma.post.findMany({
+    where: {
+      published: true,
+    },
     include: {
       author: true,
       hashtags: true,

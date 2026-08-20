@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../app/generated/prisma"
@@ -12,29 +10,34 @@ datasource db {
   provider = "postgresql"
 }
 
-
 enum ReactionType {
   LIKE
   DISLIKE
   LOVE
   LAUGH
 }
+
 model User {
-  id            String    @id 
-  email         String    @unique
+  id            String     @id 
+  email         String     @unique
   name          String?
-  createdAt     DateTime  @default(now())
-  emailVerified Boolean   @default(false)
-  role          String    @default("USER")
+  createdAt     DateTime   @default(now())
+  emailVerified Boolean    @default(false)
+  role          String     @default("USER")
   image         String?
-  updatedAt     DateTime  @updatedAt
+  updatedAt     DateTime   @updatedAt
   sessions      Session[]
   accounts      Account[]
   profile       Profile?
-  posts        Post[]
-  comments    Comment[]
-  reactions   Reaction[]
-  shares      Share[]
+  posts         Post[]
+  comments      Comment[]
+  reactions     Reaction[]
+  shares        Share[]
+
+  // --- Follow Relations ---
+  followers     Follow[]   @relation("UserFollowers")
+  following     Follow[]   @relation("UserFollowing")
+
   @@map("user")
 }
 
@@ -86,22 +89,19 @@ model Verification {
   @@map("verification")
 }
 
-
 model Profile {
   id          String   @id @default(uuid())
-  bannerUrl   String?  // Profile page header banner background
+  bannerUrl   String?  
   address     String?
   githubLink  String?
   jobTitle    String?
   bio         String?
-  createdAt   DateTime @default(now()) // "Joined at" date
+  createdAt   DateTime @default(now()) 
   updatedAt   DateTime @updatedAt
 
-  // Relation to User
   userId      String   @unique
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Implicit Many-to-Many Relation to Tag for Tech Stack
   techStack   Tag[]
 
   @@map("profile")
@@ -117,23 +117,19 @@ model Tag {
 
 model Post {
   id        String    @id @default(uuid())
-  caption   String?   // Short headline or image caption
-  content   String?   @db.Text // Main post body
-  imageUrl  String?   // Vercel Blob CDN URL
+  caption   String?   
+  content   String?   @db.Text 
+  imageUrl  String?   
   published Boolean   @default(true)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  // Author Relation
   authorId  String
   author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  // Social Relations
   comments  Comment[]
   reactions Reaction[]
   shares    Share[]
-
-  // Many-to-Many Relation with Hashtag
   hashtags  Hashtag[]
 
   @@index([authorId])
@@ -143,16 +139,13 @@ model Post {
 
 model Hashtag {
   id        String   @id @default(uuid())
-  name      String   @unique // Saved in lowercase without '#', e.g. "nextjs"
+  name      String   @unique 
   createdAt DateTime @default(now())
 
-  // Relation back to Post
   posts     Post[]
 
   @@map("hashtag")
 }
-
-// --- 5. Nested Comment Model ---
 
 model Comment {
   id        String   @id @default(uuid())
@@ -160,15 +153,12 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Post Relation
   postId    String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  // Author Relation
   authorId  String
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  // Self-referential Relation for Nested Comments (Replies)
   parentId  String?
   parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   Comment[] @relation("CommentReplies")
@@ -178,8 +168,6 @@ model Comment {
   @@index([parentId])
   @@map("comment")
 }
-
-// --- 6. Reaction Model ---
 
 model Reaction {
   id        String       @id @default(uuid())
@@ -192,13 +180,10 @@ model Reaction {
   postId    String
   post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  // Ensures one reaction per user per post
   @@unique([userId, postId])
   @@index([postId])
   @@map("reaction")
 }
-
-// --- 7. Share Model ---
 
 model Share {
   id        String   @id @default(uuid())
@@ -213,4 +198,21 @@ model Share {
   @@index([userId])
   @@index([postId])
   @@map("share")
+}
+
+// --- Follow Join Model ---
+
+model Follow {
+  followerId  String
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+
+  followingId String
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follow")
 }

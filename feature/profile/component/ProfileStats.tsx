@@ -172,7 +172,7 @@ const ProfileStats = ({
               recentComments.map((comment) => (
                 <Link
                   key={comment.id}
-                  href={`/post/${comment.postId}`}
+                  href={`/post/${comment.postId}#comments`}
                   className="group bg-card hover:bg-accent/40 border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all duration-200 flex flex-col gap-2 shrink-0 min-w-0"
                 >
                   {/* Context Tag Header */}
