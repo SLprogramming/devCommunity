@@ -3,10 +3,6 @@ import {
   Search,
   Bell,
   Menu,
-  Home,
-  Compass,
-  Bookmark,
-  Code,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +23,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import SidebarNav from "@/components/ui/sidebar-nav";
 import { Suspense } from "react";
 import { signOutAction } from "@/feature/auth/actions";
 import { getSession } from "@/lib/get-session";
@@ -157,54 +154,9 @@ export async function TopBar() {
               </SheetHeader>
 
               {/* Sidebar Navigation */}
-              <nav className="flex flex-col gap-2 overflow-y-auto">
-                <Link
-                  href="/"
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-accent text-accent-foreground font-medium border border-border shadow-sm"
-                >
-                  <Home className="h-5 w-5 text-primary" /> Home
-                </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all group"
-                >
-                  <Compass className="h-5 w-5 group-hover:text-primary transition-colors" />{" "}
-                  Explore
-                </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all group"
-                >
-                  <Bookmark className="h-5 w-5 group-hover:text-primary transition-colors" />{" "}
-                  Bookmarks
-                </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all group"
-                >
-                  <Code className="h-5 w-5 group-hover:text-primary transition-colors" />{" "}
-                  Hackathons
-                </Link>
-
-                <hr className="border-border my-2" />
-
-                <div className="px-4 py-2">
-                  <span className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                    My Custom Tags
-                  </span>
-                  <div className="flex flex-col gap-1 mt-3">
-                    <span className="text-sm text-muted-foreground hover:text-foreground cursor-pointer py-1.5 transition-colors">
-                      #react
-                    </span>
-                    <span className="text-sm text-muted-foreground hover:text-foreground cursor-pointer py-1.5 transition-colors">
-                      #nextjs
-                    </span>
-                    <span className="text-sm text-muted-foreground hover:text-foreground cursor-pointer py-1.5 transition-colors">
-                      #tailwindcss
-                    </span>
-                  </div>
-                </div>
-              </nav>
+              <Suspense>
+                <SidebarNav />
+              </Suspense>
             </SheetContent>
           </Sheet>
 

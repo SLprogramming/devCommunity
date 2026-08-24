@@ -10,6 +10,7 @@ import {
   Users,
   UserCheck,
 } from "lucide-react";
+import Link from "next/link";
 
 import { getUserProfile } from "@/feature/profile/queries";
 import { notFound } from "next/navigation";
@@ -61,7 +62,10 @@ export default async function UserData({ userId: id }: { userId: string }) {
               </p>
 
               {/* Followers / Following Counts */}
-              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+              <Link
+                href={`/profile/${id}/network`}
+                className="flex items-center gap-4 mt-2 text-xs text-muted-foreground"
+              >
                 <div className="flex items-center gap-1 hover:text-foreground transition-colors cursor-pointer">
                   <Users className="w-3.5 h-3.5 text-primary shrink-0" />
                   <span className="font-semibold text-foreground">
@@ -76,7 +80,7 @@ export default async function UserData({ userId: id }: { userId: string }) {
                   </span>
                   <span>Following</span>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
 

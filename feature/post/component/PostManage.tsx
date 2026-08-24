@@ -15,7 +15,15 @@ import {
   Loader2,
   Globe,
   GlobeOff,
+  ArrowUpDown,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { type UserPost } from "@/feature/post/queries";
 import { PostTimestamp } from "@/feature/post/component/PostTimestamp";
 import {
@@ -24,11 +32,21 @@ import {
 } from "@/feature/post/actions";
 import { toast } from "sonner";
 
+type SortKey = "date-desc" | "date-asc" | "popular-desc" | "popular-asc";
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "date-desc", label: "Newest first" },
+  { value: "date-asc", label: "Oldest first" },
+  { value: "popular-desc", label: "Most popular" },
+  { value: "popular-asc", label: "Least popular" },
+];
+
 export default function PostManage({ postArray }: { postArray: UserPost[] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "published" | "draft"
   >("all");
+  const [sortKey, setSortKey] = useState<SortKey>("date-desc");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [isPending, startTransition] = useTransition();
@@ -71,6 +89,23 @@ export default function PostManage({ postArray }: { postArray: UserPost[] }) {
           : !post.published;
 
     return matchesSearch && matchesStatus;
+  });
+
+  // 3. Sort logic on Filtered Posts
+  const reactionCount = (post: UserPost) => post.reactions?.length || 0;
+
+  const sortedPosts = [...filteredPosts].sort((a, b) => {
+    switch (sortKey) {
+      case "date-asc":
+        return a.createdAt.getTime() - b.createdAt.getTime();
+      case "popular-desc":
+        return reactionCount(b) - reactionCount(a);
+      case "popular-asc":
+        return reactionCount(a) - reactionCount(b);
+      case "date-desc":
+      default:
+        return b.createdAt.getTime() - a.createdAt.getTime();
+    }
   });
 
   // 3. Simple Handler: Trigger optimistic update -> Run Server Action
@@ -203,28 +238,53 @@ export default function PostManage({ postArray }: { postArray: UserPost[] }) {
           />
         </div>
 
-        <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl w-full sm:w-auto">
-          {(["all", "published", "draft"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setStatusFilter(tab)}
-              className={`flex-1 sm:flex-initial text-xs font-medium px-3 py-1.5 rounded-lg capitalize transition-all ${
-                statusFilter === tab
-                  ? "bg-background text-foreground shadow-xs font-semibold"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl w-full sm:w-auto">
+            {(["all", "published", "draft"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setStatusFilter(tab)}
+                className={`flex-1 sm:flex-initial text-xs font-medium px-3 py-1.5 rounded-lg capitalize transition-all ${
+                  statusFilter === tab
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Arrange By */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="hidden lg:inline-flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+              <ArrowUpDown className="w-3.5 h-3.5" />
+              Arrange by
+            </span>
+            <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
+              <SelectTrigger
+                size="sm"
+                className="w-full sm:w-[150px] text-xs bg-muted/60 border-transparent shadow-none"
+              >
+                <SelectValue placeholder="Arrange by" />
+              </SelectTrigger>
+              <SelectContent className="text-xs">
+                {SORT_OPTIONS.map(({ value, label }) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
       {/* Posts List Container */}
       <div className="bg-card text-card-foreground border border-border rounded-2xl overflow-hidden shadow-xs relative">
-        {filteredPosts.length > 0 ? (
+        {sortedPosts.length > 0 ? (
           <div className="divide-y divide-border">
-            {filteredPosts.map((post) => (
+            {sortedPosts.map((post) => (
               <div
                 key={post.id}
                 className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-muted/30 transition-colors group"

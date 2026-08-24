@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Calendar, Clock } from "lucide-react";
 import CommentSection from "@/feature/post/component/PostCommentSection";
+import FollowButton from "@/feature/follow/component/FollowButton";
 import { getPostComments, getPostDetailWithId } from "@/feature/post/queries";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -83,9 +84,7 @@ export default async function PostDetailData({ id }: { id: string }) {
               </div>
             </div>
 
-            <button className="text-[11px] sm:text-xs font-semibold bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border px-3 sm:px-3.5 py-1.5 rounded-lg sm:rounded-xl transition-colors shrink-0">
-              Follow
-            </button>
+            <FollowButton userId={postDetail?.authorId} />
           </div>
 
           {/* Title */}

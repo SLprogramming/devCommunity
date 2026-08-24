@@ -58,10 +58,15 @@ export const followUserAction = async (
         },
       });
 
-      revalidatePath(`/profile/${userId}`);
-      revalidatePath(`/profile/${currentUserId}`);
+      revalidatePath(`/profile/${userId}`, "layout");
+      revalidatePath(`/profile/${currentUserId}`, "layout");
+      revalidatePath(`/profile/${userId}/network`);
+      revalidatePath(`/profile/${currentUserId}/network`);
       updateTag(`user-profile-${userId}`);
       updateTag(`user-profile-${currentUserId}`);
+      updateTag(`user-followers-${userId}`);
+      updateTag(`user-following-${currentUserId}`);
+      updateTag(`user-feed-${currentUserId}`);
 
       return {
         success: true,
@@ -77,10 +82,15 @@ export const followUserAction = async (
         },
       });
 
-      revalidatePath(`/profile/${userId}`);
-      revalidatePath(`/profile/${currentUserId}`);
+      revalidatePath(`/profile/${userId}`, "layout");
+      revalidatePath(`/profile/${currentUserId}`, "layout");
+      revalidatePath(`/profile/${userId}/network`);
+      revalidatePath(`/profile/${currentUserId}/network`);
       updateTag(`user-profile-${userId}`);
+      updateTag(`user-followers-${userId}`);
+      updateTag(`user-following-${currentUserId}`);
       updateTag(`user-profile-${currentUserId}`);
+      updateTag(`user-feed-${currentUserId}`);
 
       return {
         success: true,
