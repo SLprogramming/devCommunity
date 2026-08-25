@@ -120,7 +120,7 @@ const ProfileStats = ({
 
         {/* Tab Content: Recent Posts */}
         {activeTab === "posts" && (
-          <div className="h-[320px] sm:h-[380px] overflow-y-auto pr-1 flex flex-col gap-2.5 sm:gap-3 scrollbar-thin scrollbar-thumb-muted">
+          <div className="max-h-[320px] sm:max-h-[380px] overflow-y-auto pr-1 flex flex-col gap-2.5 sm:gap-3 scrollbar-thin scrollbar-thumb-muted">
             {recentPosts.length > 0 ? (
               recentPosts.map((post) => (
                 <Link
@@ -138,11 +138,11 @@ const ProfileStats = ({
                     <div className="flex items-center gap-3 sm:gap-4">
                       <span className="flex items-center gap-1">
                         <Heart className="w-3.5 h-3.5 text-muted-foreground/80" />
-                        {post.reactionsCount}
+                        {formatCount(post.reactionsCount)}
                       </span>
                       <span className="flex items-center gap-1">
                         <MessageSquare className="w-3.5 h-3.5 text-muted-foreground/80" />
-                        {post.commentsCount}
+                        {formatCount(post.commentsCount)}
                       </span>
                     </div>
 
@@ -164,7 +164,7 @@ const ProfileStats = ({
 
         {/* Tab Content: Comments */}
         {activeTab === "comments" && (
-          <div className="h-[320px] sm:h-[380px] overflow-y-auto pr-1 flex flex-col gap-2.5 sm:gap-3 scrollbar-thin scrollbar-thumb-muted">
+          <div className="max-h-[320px] sm:max-h-[380px] overflow-y-auto pr-1 flex flex-col gap-2.5 sm:gap-3 scrollbar-thin scrollbar-thumb-muted">
             {recentComments.length > 0 ? (
               recentComments.map((comment) => (
                 <Link
@@ -213,7 +213,7 @@ const ProfileStats = ({
 
         {/* Tab Content: Bookmarks Placeholder */}
         {activeTab === "bookmarks" && (
-          <div className="h-[320px] sm:h-[380px] overflow-y-auto pr-1 flex flex-col gap-2.5 sm:gap-3 scrollbar-thin scrollbar-thumb-muted">
+          <div className="max-h-[320px] sm:max-h-[380px] overflow-y-auto pr-1 flex flex-col gap-2.5 sm:gap-3 scrollbar-thin scrollbar-thumb-muted">
             <EmptyState
               title="No saved bookmarks"
               description="Posts you save for later reference will show up in this collection."

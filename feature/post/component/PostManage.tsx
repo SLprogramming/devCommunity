@@ -31,6 +31,7 @@ import {
   togglePublishPostAction,
 } from "@/feature/post/actions";
 import { toast } from "sonner";
+import { formatCount } from "@/utils/helper";
 
 type SortKey = "date-desc" | "date-asc" | "popular-desc" | "popular-asc";
 
@@ -184,7 +185,7 @@ export default function PostManage({ postArray }: { postArray: UserPost[] }) {
               Total Posts
             </p>
             <p className="text-2xl font-bold text-foreground mt-0.5">
-              {optimisticPosts.length}
+              {formatCount(optimisticPosts.length)}
             </p>
           </div>
           <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
@@ -198,7 +199,7 @@ export default function PostManage({ postArray }: { postArray: UserPost[] }) {
               Published
             </p>
             <p className="text-2xl font-bold text-foreground mt-0.5">
-              {optimisticPosts.filter((p) => p.published).length}
+              {formatCount(optimisticPosts.filter((p) => p.published).length)}
             </p>
           </div>
           <div className="p-2.5 bg-emerald-500/10 text-emerald-500 rounded-xl">
@@ -212,10 +213,12 @@ export default function PostManage({ postArray }: { postArray: UserPost[] }) {
               Total Engagement
             </p>
             <p className="text-2xl font-bold text-foreground mt-0.5">
-              {optimisticPosts.reduce(
-                (acc, p) =>
-                  acc + (p.reactions?.length || 0) + (p.comments?.length || 0),
-                0,
+              {formatCount(
+                optimisticPosts.reduce(
+                  (acc, p) =>
+                    acc + (p.reactions?.length || 0) + (p.comments?.length || 0),
+                  0,
+                ),
               )}
             </p>
           </div>

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Search, Users, UserCheck, MapPin, Layers, X } from "lucide-react";
 import { toast } from "sonner";
 import { followUserAction } from "@/feature/follow/actions";
+import { formatCount } from "@/utils/helper";
 
 interface NetworkUser {
   id: string;
@@ -89,7 +90,7 @@ export default function NetworkData({
           <Users className="w-4 h-4 shrink-0" />
           <span>Followers</span>
           <span className="text-[10px] sm:text-[11px] bg-muted/80 px-2 py-0.5 rounded-full text-muted-foreground">
-            {followers.length}
+            {formatCount(followers.length)}
           </span>
         </button>
 
@@ -105,7 +106,7 @@ export default function NetworkData({
             <UserCheck className="w-4 h-4 shrink-0" />
             <span>Following</span>
             <span className="text-[10px] sm:text-[11px] bg-muted/80 px-2 py-0.5 rounded-full text-muted-foreground">
-              {following.length}
+              {formatCount(following.length)}
             </span>
           </button>
         )}

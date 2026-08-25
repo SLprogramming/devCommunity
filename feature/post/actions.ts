@@ -1,12 +1,14 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
+import { cookies } from "next/headers";
 import { put, del } from "@vercel/blob";
 import { prisma } from "@/lib/prisma"; // Adjust import according to your Prisma client path
 import { type ToastType } from "@/hooks/use-action-toast";
 import { type ReactionType } from "@/app/generated/prisma/enums";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/get-session";
+import { getPostViews, getPostReactions } from "@/feature/post/queries";
 export type InitialState = {
   success: boolean;
   message: string;
@@ -587,5 +589,62 @@ export const togglePublishPostAction = async ({
         timestamp: Date.now(),
       },
     };
+  }
+};
+
+const VIEW_COOKIE_MAX_AGE = 60 * 60 * 24; // 1 day device session
+
+export const getPostViewsAction = async ({ postId }: { postId: string }) => {
+  try {
+    return await getPostViews(postId);
+  } catch (error) {
+    console.error("Error fetching post views:", error);
+    return 0;
+  }
+};
+
+export const getPostReactionsAction = async ({
+  postId,
+}: {
+  postId: string;
+}) => {
+  try {
+    return await getPostReactions(postId);
+  } catch (error) {
+    console.error("Error fetching post reactions:", error);
+    return [];
+  }
+};
+
+export const recordPostViewAction = async ({ postId }: { postId: string }) => {
+  try {
+    if (!postId) {
+      return { success: false, counted: false };
+    }
+
+    const cookieStore = await cookies();
+    const viewCookieName = `viewed_${postId}`;
+
+    // Already viewed on this device within the last 24h
+    if (cookieStore.get(viewCookieName)) {
+      return { success: true, counted: false };
+    }
+
+    await prisma.post.update({
+      where: { id: postId },
+      data: { views: { increment: 1 } },
+    });
+
+    cookieStore.set(viewCookieName, "1", {
+      maxAge: VIEW_COOKIE_MAX_AGE,
+      path: "/",
+      sameSite: "lax",
+      httpOnly: true,
+    });
+
+    return { success: true, counted: true };
+  } catch (error) {
+    console.error("Error recording post view:", error);
+    return { success: false, counted: false };
   }
 };

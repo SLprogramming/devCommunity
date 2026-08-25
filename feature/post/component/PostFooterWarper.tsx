@@ -2,6 +2,7 @@ import {
   getPostCommentsCount,
   getPostReactions,
   getPostSharesCount,
+  getPostViews,
   type PostWithReactions,
 } from "@/feature/post/queries";
 
@@ -11,6 +12,7 @@ export default async function PostFooterWarper({ postId }: { postId: string }) {
   const postReaction = await getPostReactions(postId);
   const shareCount = await getPostSharesCount(postId);
   const commentCount = await getPostCommentsCount(postId);
+  const views = await getPostViews(postId);
   return (
     <>
       <PostFooter
@@ -22,6 +24,7 @@ export default async function PostFooterWarper({ postId }: { postId: string }) {
           })),
           comments: commentCount,
           share: shareCount,
+          views,
         }}
       />
     </>

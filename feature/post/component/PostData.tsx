@@ -18,6 +18,7 @@ function getFooterData(post: FeedPost) {
       0,
     ),
     share: post.shares.length,
+    views: post.views,
   };
 }
 
@@ -49,8 +50,13 @@ export default function PostCard({
           <h4 className="text-xs sm:text-sm font-medium text-foreground/90 hover:text-primary transition-colors truncate">
             {post.author?.name || "Anonymous"}
           </h4>
-          <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
+          <p className="text-[11px] sm:text-xs text-muted-foreground truncate flex items-center gap-2">
             <PostTimestamp createdAt={post.createdAt} />
+            {!post.published && (
+              <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+                Draft
+              </span>
+            )}
           </p>
         </div>
       </Link>

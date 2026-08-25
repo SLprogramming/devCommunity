@@ -116,6 +116,19 @@ export async function getPostSharesCount(postId: string) {
   });
 }
 
+// View counts are non-critical — short-lived cache, no invalidation tags
+export async function getPostViews(postId: string) {
+  "use cache";
+  cacheLife("minutes");
+
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    select: { views: true },
+  });
+
+  return post?.views ?? 0;
+}
+
 export async function getTotalPostsByUserId(authorId: string) {
   "use cache";
   cacheLife("hours");
@@ -144,9 +157,33 @@ export async function getTotalCommentsByUserId(authorId: string) {
   });
 }
 
-export type PostArrayWithReactions = Awaited<ReturnType<typeof getAllPosts>>;
+// Profile timeline: all posts for the owner (incl. drafts), published only for others
+export async function getProfilePosts(profileId: string, viewerId?: string) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(`user-posts-${profileId}`);
 
-export type PostWithReactions = PostArrayWithReactions[number];
+  return prisma.post.findMany({
+    where: {
+      authorId: profileId,
+      ...(viewerId === profileId ? {} : { published: true }),
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    include: {
+      author: true,
+      hashtags: true,
+      comments: {
+        include: {
+          replies: true,
+        },
+      },
+      reactions: true,
+      shares: true,
+    },
+  });
+}
+
+export type PostArrayWithReactions = Awaited<ReturnType<typeof getAllPosts>>;export type PostWithReactions = PostArrayWithReactions[number];
 
 export type PostCommentsArray = Awaited<ReturnType<typeof getPostComments>>;
 

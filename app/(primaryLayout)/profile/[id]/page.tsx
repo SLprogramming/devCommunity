@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import UserData, {
   ProfileSkeleton,
 } from "@/feature/profile/component/UserData";
+import ProfilePosts from "@/feature/profile/component/ProfilePosts";
+import { PostFeedSkeleton } from "@/feature/post/component/PostData";
 import { getPopularUserIds } from "@/feature/profile/queries";
 import { getSession } from "@/lib/get-session";
 
@@ -34,6 +36,14 @@ async function InternalWarper({ params }: PageProps) {
   return (
     <>
       <UserData userId={id} />
+
+      {/* Facebook-style post timeline */}
+      <section className="flex flex-col gap-3 min-w-0 w-full">
+        <h2 className="text-sm font-semibold text-foreground px-1">Posts</h2>
+        <Suspense fallback={<PostFeedSkeleton count={3} />}>
+          <ProfilePosts userId={id} />
+        </Suspense>
+      </section>
     </>
   );
 }

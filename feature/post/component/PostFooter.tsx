@@ -2,7 +2,6 @@
 
 import React, {
   useEffect,
-  useOptimistic,
   useState,
   useTransition,
 } from "react";
@@ -15,7 +14,11 @@ import {
   Eye,
   Share2,
 } from "lucide-react";
-import { reactPostAction } from "@/feature/post/actions";
+import {
+  getPostReactionsAction,
+  getPostViewsAction,
+  reactPostAction,
+} from "@/feature/post/actions";
 import { type ReactionType as ImportReactionType } from "@/app/generated/prisma/enums";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -79,67 +82,95 @@ export function PostFooter({ initialData }: PostFooterProps) {
   const [isPending, startTransition] = useTransition();
   const session = useSession();
 
-  // 1. Track mount state to prevent SSR vs Client mismatch
-  const [isMounted, setIsMounted] = useState(false);
+  // Views start from SSR data, then refresh from the short-lived cache
+  const [views, setViews] = useState(initialData?.views ?? 0);
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    let isMounted = true;
 
-  // 2. Only compute user reaction *after* the client has mounted
-  const userReaction =
-    isMounted && session.data?.user.id
-      ? initialData?.reactions?.find((e) => e.userId === session.data?.user.id)
-          ?.type || null
-      : null;
+    getPostViewsAction({ postId: initialData.postId })
+      .then((freshViews) => {
+        if (isMounted) setViews(freshViews);
+      })
+      .catch(() => {});
 
-  // 3. Pass initialData into useOptimistic
-  const [optimisticState, setOptimisticState] = useOptimistic(
-    {
-      userReaction: userReaction,
-      reactionCount: initialData?.reactions?.length || 0,
-    },
-    (current, nextReaction: ReactionType) => {
-      const isRemoving =
-        nextReaction === null || current.userReaction === nextReaction;
-      const isAdding = current.userReaction === null && nextReaction !== null;
+    return () => {
+      isMounted = false;
+    };
+  }, [initialData.postId]);
 
-      let newCount = current.reactionCount;
-      if (isRemoving) {
-        newCount = Math.max(0, current.reactionCount - 1);
-      } else if (isAdding) {
-        newCount = current.reactionCount + 1;
-      }
+  // 2. Reaction state lives locally so it never reverts to stale cached props
+  const [reactionState, setReactionState] = useState<{
+    userReaction: ReactionType;
+    reactionCount: number;
+  }>({
+    userReaction: null, // SSR-safe: session is unknown on the server
+    reactionCount: initialData?.reactions?.length || 0,
+  });
 
-      return {
-        userReaction: isRemoving ? null : nextReaction,
-        reactionCount: newCount,
-      };
-    },
-  );
+  const userId = session.data?.user.id;
+
+  // 3. Sync authoritative reaction data on mount (self-corrects stale feed caches)
+  useEffect(() => {
+    let isMounted = true;
+
+    getPostReactionsAction({ postId: initialData.postId })
+      .then((reactions) => {
+        if (!isMounted || !reactions) return;
+        const mine = userId
+          ? reactions.find((r) => r.userId === userId)?.type || null
+          : null;
+        setReactionState({
+          userReaction: mine,
+          reactionCount: reactions.length,
+        });
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialData.postId, userId]);
 
   const handleSelectReaction = (type: ReactionType) => {
-    if (!session.data?.user.id) {
+    if (!userId) {
       return router.push("/login");
     }
-    const targetReaction =
-      type === null || optimisticState.userReaction === type ? null : type;
 
+    const previousState = reactionState;
+    const current = reactionState.userReaction;
+    const target =
+      type === null || current === type ? null : type;
+
+    // 1. Optimistic local update
+    let newCount = previousState.reactionCount;
+    if (target === null && current !== null) {
+      newCount = Math.max(0, newCount - 1);
+    } else if (target !== null && current === null) {
+      newCount += 1;
+    }
+    setReactionState({ userReaction: target, reactionCount: newCount });
+
+    // 2. Server action; revert only on failure
     startTransition(async () => {
-      setOptimisticState(targetReaction);
+      try {
+        const res = await reactPostAction({
+          postId: initialData.postId,
+          reactionType: target,
+        });
 
-      const res = await reactPostAction({
-        postId: initialData.postId,
-        reactionType: targetReaction,
-      });
-
-      if (!res?.success) {
-        toast.error(res?.message || "Failed to update reaction.");
+        if (!res?.success) {
+          setReactionState(previousState);
+          toast.error(res?.message || "Failed to update reaction.");
+        }
+      } catch {
+        setReactionState(previousState);
+        toast.error("Something went wrong. Please try again.");
       }
     });
   };
 
   const activeReactionData = REACTIONS.find(
-    (r) => r.type === optimisticState.userReaction,
+    (r) => r.type === reactionState.userReaction,
   );
   const ActiveIcon = activeReactionData?.icon || ThumbsUp;
 
@@ -173,7 +204,7 @@ export function PostFooter({ initialData }: PostFooterProps) {
           {/* Main Reaction Trigger Button */}
           <button
             onClick={() =>
-              handleSelectReaction(optimisticState.userReaction ? null : "LIKE")
+              handleSelectReaction(reactionState.userReaction ? null : "LIKE")
             }
             className={`flex items-center gap-1 sm:gap-1.5 transition-colors group/btn ${
               activeReactionData
@@ -183,12 +214,12 @@ export function PostFooter({ initialData }: PostFooterProps) {
           >
             <ActiveIcon
               className={`h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover/btn:scale-110 transition-transform ${
-                optimisticState.userReaction === "LOVE" ? "fill-rose-500" : ""
+                reactionState.userReaction === "LOVE" ? "fill-rose-500" : ""
               }`}
             />
             <span className="font-medium text-xs sm:text-sm">
               {activeReactionData ? activeReactionData.label : "Like"} (
-              {formatCount(optimisticState.reactionCount)})
+              {formatCount(reactionState.reactionCount)})
             </span>
           </button>
         </div>
@@ -227,7 +258,7 @@ export function PostFooter({ initialData }: PostFooterProps) {
       {/* ================= VIEWS COUNTER ================= */}
       <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-muted-foreground/80 shrink-0">
         <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-        <span>{formatCount(initialData?.views ?? 0)}</span>
+        <span>{formatCount(views)}</span>
       </div>
     </div>
   );

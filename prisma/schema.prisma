@@ -120,9 +120,10 @@ model Post {
   caption   String?   
   content   String?   @db.Text 
   imageUrl  String?   
-  published Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  published Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  views     Int      @default(0)
 
   authorId  String
   author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)

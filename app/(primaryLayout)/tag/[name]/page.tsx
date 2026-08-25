@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Hash } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import PostCard from "@/feature/post/component/PostData";
+import { formatCount } from "@/utils/helper";
 
 async function getTagWithPosts(name: string) {
   "use cache";
@@ -62,7 +63,8 @@ export default async function TagPage({
             #{tag.name}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            {tag._count.posts} {tag._count.posts === 1 ? "post" : "posts"}
+            {formatCount(tag._count.posts)}{" "}
+            {tag._count.posts === 1 ? "post" : "posts"}
           </p>
         </div>
       </header>

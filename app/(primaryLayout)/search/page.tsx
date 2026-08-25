@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { isValidSearchQuery, searchPosts, searchTags, searchUsers } from "@/feature/search/queries";
 import SearchBar from "@/components/ui/search-bar";
+import { formatCount } from "@/utils/helper";
 
 export default async function SearchPage({
   searchParams,
@@ -95,7 +96,7 @@ async function SearchResults({ q }: { q?: string }) {
             <FileText className="w-4 h-4 text-primary" />
             Posts
             <span className="text-xs font-normal text-muted-foreground">
-              ({posts.length})
+              ({formatCount(posts.length)})
             </span>
           </h2>
           <div className="divide-y divide-border border-y border-border">
@@ -133,7 +134,7 @@ async function SearchResults({ q }: { q?: string }) {
             <UserIcon className="w-4 h-4 text-primary" />
             People
             <span className="text-xs font-normal text-muted-foreground">
-              ({users.length})
+              ({formatCount(users.length)})
             </span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -176,7 +177,7 @@ async function SearchResults({ q }: { q?: string }) {
             <Hash className="w-4 h-4 text-primary" />
             Tags
             <span className="text-xs font-normal text-muted-foreground">
-              ({tags.length})
+              ({formatCount(tags.length)})
             </span>
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -188,7 +189,7 @@ async function SearchResults({ q }: { q?: string }) {
               >
                 #{tag.name}
                 <span className="text-[10px] text-muted-foreground font-sans">
-                  {tag._count.posts}{" "}
+                  {formatCount(tag._count.posts)}{" "}
                   {tag._count.posts === 1 ? "post" : "posts"}
                 </span>
               </Link>

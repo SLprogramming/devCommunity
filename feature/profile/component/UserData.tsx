@@ -138,7 +138,7 @@ export default async function UserData({ userId: id }: { userId: string }) {
       </div>
 
       {/* Main Grid Split */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-start">
         {/* Left Hand: About & Skills Panels */}
         <div className="flex flex-col gap-4 sm:gap-6">
           {/* Bio Card */}

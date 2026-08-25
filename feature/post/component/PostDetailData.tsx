@@ -7,6 +7,7 @@ import { Calendar, Clock } from "lucide-react";
 import CommentSection from "@/feature/post/component/PostCommentSection";
 import FollowButton from "@/feature/follow/component/FollowButton";
 import { PostTimestamp } from "@/feature/post/component/PostTimestamp";
+import PostViewTracker from "@/feature/post/component/PostViewTracker";
 import { getPostComments, getPostDetailWithId } from "@/feature/post/queries";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +20,9 @@ export default async function PostDetailData({ id }: { id: string }) {
 
   return (
     <>
+      {/* Records one view per device per day (cookie-based) */}
+      <PostViewTracker postId={postDetail.id} />
+
       {/* ================= MAIN ARTICLE AREA ================= */}
       <main className="lg:col-span-9 flex flex-col gap-8 min-w-0 w-full">
         <article

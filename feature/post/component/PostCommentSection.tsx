@@ -22,6 +22,7 @@ import {
 import { type PostComment } from "../queries";
 import { writeCommentAction } from "../actions";
 import { toast } from "sonner";
+import { formatCount } from "@/utils/helper";
 import { PostTimestamp } from "./PostTimestamp";
 import { useSession } from "@/lib/auth-client";
 
@@ -137,7 +138,7 @@ export default function CommentSection({
       <div className="flex items-center justify-between border-b border-border pb-3 sm:pb-4">
         <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
           <MessageSquare className="w-4 h-4 text-primary" />
-          Discussion ({optimisticComments.length})
+          Discussion ({formatCount(optimisticComments.length)})
         </h2>
       </div>
 

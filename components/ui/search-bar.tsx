@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { quickSearchAction, type QuickSearchResult } from "@/feature/search/actions";
 import { useDebounce } from "@/hooks/use-debounce";
+import { formatCount } from "@/utils/helper";
 
 export default function SearchBar({
   enableDropdown = true,
@@ -293,7 +294,7 @@ export default function SearchBar({
                         {tag.name}
                       </span>
                       <span className="text-[10px] text-muted-foreground shrink-0">
-                        {tag._count.posts}{" "}
+                        {formatCount(tag._count.posts)}{" "}
                         {tag._count.posts === 1 ? "post" : "posts"}
                       </span>
                     </Link>
