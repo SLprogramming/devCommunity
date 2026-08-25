@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import Link from "next/link";
+import { PostTimestamp } from "@/feature/post/component/PostTimestamp";
 
 export type StatPost = {
   id: string;
@@ -147,11 +148,7 @@ const ProfileStats = ({
 
                     <span className="flex items-center gap-1 text-muted-foreground/70 shrink-0">
                       <Calendar className="w-3.5 h-3.5" />
-                      {new Date(post.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                      <PostTimestamp createdAt={post.createdAt} />
                     </span>
                   </div>
                 </Link>
@@ -200,11 +197,7 @@ const ProfileStats = ({
 
                     <span className="flex items-center gap-1 text-muted-foreground/70 shrink-0">
                       <Calendar className="w-3.5 h-3.5" />
-                      {new Date(comment.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                      <PostTimestamp createdAt={comment.createdAt} />
                     </span>
                   </div>
                 </Link>

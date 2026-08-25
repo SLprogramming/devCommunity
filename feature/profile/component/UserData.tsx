@@ -10,6 +10,7 @@ import {
   Users,
   UserCheck,
 } from "lucide-react";
+import { PostTimestamp } from "@/feature/post/component/PostTimestamp";
 import Link from "next/link";
 
 import { getUserProfile } from "@/feature/profile/queries";
@@ -126,9 +127,11 @@ export default async function UserData({ userId: id }: { userId: string }) {
           <div className="flex items-center gap-1.5 sm:ml-auto shrink-0">
             <Calendar className="w-3.5 h-3.5 shrink-0" />
             <span>
-              {user?.profile?.createdAt
-                ? new Date(user.profile.createdAt).toLocaleDateString()
-                : "Joined recently"}
+              {user?.profile?.createdAt ? (
+                <PostTimestamp createdAt={user.profile.createdAt} />
+              ) : (
+                "Joined recently"
+              )}
             </span>
           </div>
         </div>

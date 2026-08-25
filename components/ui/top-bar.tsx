@@ -5,7 +5,7 @@ import {
   Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import SearchBar from "@/components/ui/search-bar";
 import { ThemeToggle } from "../theme/theme-toggle";
 import {
   DropdownMenu,
@@ -176,27 +176,21 @@ export async function TopBar() {
 
         {/* Center Section: Search Bar */}
         <div className="hidden md:flex max-w-xl w-full mx-8 relative items-center">
-          <div className="absolute left-3 text-muted-foreground pointer-events-none">
-            <Search className="h-4 w-4" />
-          </div>
-          <Input
-            type="search"
-            placeholder="Search posts, tags, or creators..."
-            className="w-full pl-9 pr-12 h-9 bg-muted/40 border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:border-primary/50 transition-all rounded-md"
-          />
-          <kbd className="absolute right-3 hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-            <span>/</span>
-          </kbd>
+          <SearchBar />
         </div>
 
         {/* Right Section: Actions & Profile */}
         <div className="flex items-center gap-3">
           <Button
+            asChild
             variant="ghost"
             size="icon"
+            aria-label="Search"
             className="md:hidden text-muted-foreground hover:text-foreground hover:bg-muted"
           >
-            <Search className="h-5 w-5" />
+            <Link href="/search">
+              <Search className="h-5 w-5" />
+            </Link>
           </Button>
 
           <Button

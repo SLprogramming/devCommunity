@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Calendar, Clock } from "lucide-react";
 import CommentSection from "@/feature/post/component/PostCommentSection";
 import FollowButton from "@/feature/follow/component/FollowButton";
+import { PostTimestamp } from "@/feature/post/component/PostTimestamp";
 import { getPostComments, getPostDetailWithId } from "@/feature/post/queries";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -62,16 +63,7 @@ export default async function PostDetailData({ id }: { id: string }) {
                 <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-muted-foreground mt-0.5 flex-wrap">
                   <span className="flex items-center gap-1 shrink-0">
                     <Calendar className="w-3 h-3 flex-shrink-0" />
-                    {postDetail?.createdAt
-                      ? new Date(postDetail.createdAt).toLocaleDateString(
-                          "en-US",
-                          {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          },
-                        )
-                      : "Recently"}
+                    <PostTimestamp createdAt={postDetail?.createdAt} />
                   </span>
                   <span className="hidden xs:inline">•</span>
                   <span className="flex items-center gap-1 shrink-0">
