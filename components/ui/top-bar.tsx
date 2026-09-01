@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   Search,
-  Bell,
   Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,22 +26,20 @@ import SidebarNav from "@/components/ui/sidebar-nav";
 import { Suspense } from "react";
 import { signOutAction } from "@/feature/auth/actions";
 import { getSession } from "@/lib/get-session";
+import { getNotificationsForUser } from "@/feature/notification/queries";
+import { NotificationBell } from "@/feature/notification/component/NotificationBell";
 
 async function UserProfile() {
   const session = await getSession();
+  const initialNotifications = session?.user?.id
+    ? await getNotificationsForUser(session.user.id, undefined, 8)
+    : null;
 
   return (
     <>
       {session ? (
         <>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9 rounded-full"
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />
-          </Button>
+          {initialNotifications && <NotificationBell initial={initialNotifications} />}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

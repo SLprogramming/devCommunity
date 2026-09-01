@@ -17,26 +17,36 @@ enum ReactionType {
   LAUGH
 }
 
+enum NotificationType {
+  NEW_POST_FROM_FOLLOWING
+  COMMENT_ON_POST
+  REPLY_TO_COMMENT
+  REACTION_ON_POST
+}
+
 model User {
-  id            String     @id 
-  email         String     @unique
-  name          String?
-  createdAt     DateTime   @default(now())
-  emailVerified Boolean    @default(false)
-  role          String     @default("USER")
-  image         String?
-  updatedAt     DateTime   @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  profile       Profile?
-  posts         Post[]
-  comments      Comment[]
-  reactions     Reaction[]
-  shares        Share[]
+  id                    String                @id
+  email                 String                @unique
+  name                  String?
+  createdAt             DateTime              @default(now())
+  emailVerified         Boolean               @default(false)
+  role                  String                @default("USER")
+  image                 String?
+  updatedAt             DateTime              @updatedAt
+  sessions              Session[]
+  accounts              Account[]
+  profile               Profile?
+  posts                 Post[]
+  comments              Comment[]
+  reactions             Reaction[]
+  shares                Share[]
+  notificationEvents    NotificationEvent[]   @relation("NotificationActor")
+  receivedNotifications NotificationEvent[]   @relation("NotificationRecipient")
+  notificationReceipts  NotificationReceipt[]
 
   // --- Follow Relations ---
-  followers     Follow[]   @relation("UserFollowers")
-  following     Follow[]   @relation("UserFollowing")
+  followers Follow[] @relation("UserFollowers")
+  following Follow[] @relation("UserFollowing")
 
   @@map("user")
 }
@@ -90,19 +100,19 @@ model Verification {
 }
 
 model Profile {
-  id          String   @id @default(uuid())
-  bannerUrl   String?  
-  address     String?
-  githubLink  String?
-  jobTitle    String?
-  bio         String?
-  createdAt   DateTime @default(now()) 
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  bannerUrl  String?
+  address    String?
+  githubLink String?
+  jobTitle   String?
+  bio        String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  techStack   Tag[]
+  techStack Tag[]
 
   @@map("profile")
 }
@@ -116,22 +126,23 @@ model Tag {
 }
 
 model Post {
-  id        String    @id @default(uuid())
-  caption   String?   
-  content   String?   @db.Text 
-  imageUrl  String?   
-  published Boolean @default(true)
+  id        String   @id @default(uuid())
+  caption   String?
+  content   String?  @db.Text
+  imageUrl  String?
+  published Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   views     Int      @default(0)
 
-  authorId  String
-  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  comments  Comment[]
-  reactions Reaction[]
-  shares    Share[]
-  hashtags  Hashtag[]
+  comments           Comment[]
+  reactions          Reaction[]
+  shares             Share[]
+  hashtags           Hashtag[]
+  notificationEvents NotificationEvent[]
 
   @@index([authorId])
   @@index([createdAt])
@@ -140,10 +151,10 @@ model Post {
 
 model Hashtag {
   id        String   @id @default(uuid())
-  name      String   @unique 
+  name      String   @unique
   createdAt DateTime @default(now())
 
-  posts     Post[]
+  posts Post[]
 
   @@map("hashtag")
 }
@@ -154,15 +165,16 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  parentId  String?
-  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies   Comment[] @relation("CommentReplies")
+  parentId           String?
+  parent             Comment?            @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies            Comment[]           @relation("CommentReplies")
+  notificationEvents NotificationEvent[]
 
   @@index([postId])
   @@index([authorId])
@@ -175,11 +187,12 @@ model Reaction {
   type      ReactionType
   createdAt DateTime     @default(now())
 
-  userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  postId    String
-  post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId            String
+  post              Post               @relation(fields: [postId], references: [id], onDelete: Cascade)
+  notificationEvent NotificationEvent?
 
   @@unique([userId, postId])
   @@index([postId])
@@ -190,11 +203,11 @@ model Share {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([postId])
@@ -204,16 +217,58 @@ model Share {
 // --- Follow Join Model ---
 
 model Follow {
-  followerId  String
-  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  followerId String
+  follower   User   @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
 
   followingId String
-  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+  following   User   @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@id([followerId, followingId])
   @@index([followerId])
   @@index([followingId])
   @@map("follow")
+}
+
+// One durable activity row per event. NEW_POST events have no recipient and are
+// joined to Follow at read time; the other event types target one recipient.
+model NotificationEvent {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  createdAt DateTime         @default(now())
+
+  actorId String
+  actor   User   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  recipientId String?
+  recipient   User?   @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  postId     String?
+  post       Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  commentId  String?
+  comment    Comment?  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reactionId String?   @unique
+  reaction   Reaction? @relation(fields: [reactionId], references: [id], onDelete: Cascade)
+
+  receipts NotificationReceipt[]
+
+  @@index([recipientId, createdAt])
+  @@index([actorId, type, createdAt])
+  @@index([createdAt, id])
+  @@map("notification_event")
+}
+
+// Sparse per-user state: rows only exist after read/dismiss actions.
+model NotificationReceipt {
+  eventId     String
+  event       NotificationEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt      DateTime?
+  dismissedAt DateTime?
+
+  @@id([eventId, userId])
+  @@index([userId, readAt])
+  @@map("notification_receipt")
 }

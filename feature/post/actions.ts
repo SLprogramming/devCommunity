@@ -13,7 +13,7 @@ export type InitialState = {
   success: boolean;
   message: string;
   error?: string;
-  data?: any;
+  data?: unknown;
   toast?: ToastType;
   redirectTo?: string;
 };
@@ -109,29 +109,39 @@ export const createPostAction = async (
     );
 
     // 4. Save Post & Link/Create Hashtags in Database atomically
-    const newPost = await prisma.post.create({
-      data: {
-        authorId,
-        caption,
-        content,
-        imageUrl,
-        hashtags: {
-          connectOrCreate: cleanTags.map((tag) => ({
-            where: { name: tag },
-            create: { name: tag },
-          })),
-        },
-      },
-      include: {
-        hashtags: true,
-        author: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
+    const newPost = await prisma.$transaction(async (tx) => {
+      const post = await tx.post.create({
+        data: {
+          authorId,
+          caption,
+          content,
+          imageUrl,
+          hashtags: {
+            connectOrCreate: cleanTags.map((tag) => ({
+              where: { name: tag },
+              create: { name: tag },
+            })),
           },
         },
-      },
+        include: {
+          hashtags: true,
+          author: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+      });
+      await tx.notificationEvent.create({
+        data: {
+          type: "NEW_POST_FROM_FOLLOWING",
+          actorId: authorId,
+          postId: post.id,
+        },
+      });
+      return post;
     });
 
     // 5. Revalidate Feed Page
@@ -185,7 +195,7 @@ export const reactPostAction = async ({
       success: false,
     };
   }
-  let post = await prisma.post.findUnique({
+  const post = await prisma.post.findUnique({
     where: {
       id: postId,
     },
@@ -246,12 +256,26 @@ export const reactPostAction = async ({
 
     // 4. CREATE: First-time reaction from user
     if (reactionType) {
-      const newReaction = await prisma.reaction.create({
-        data: {
-          userId,
-          postId,
-          type: reactionType,
-        },
+      const newReaction = await prisma.$transaction(async (tx) => {
+        const reaction = await tx.reaction.create({
+          data: {
+            userId,
+            postId,
+            type: reactionType,
+          },
+        });
+        if (post?.authorId && post.authorId !== userId) {
+          await tx.notificationEvent.create({
+            data: {
+              type: "REACTION_ON_POST",
+              actorId: userId,
+              recipientId: post.authorId,
+              postId,
+              reactionId: reaction.id,
+            },
+          });
+        }
+        return reaction;
       });
       updateTag(`post-reactions-${postId}`);
       updateTag(`user-posts-${post?.authorId}`);
@@ -320,7 +344,7 @@ export const writeCommentAction = async ({
     if (parentId) {
       const parentComment = await prisma.comment.findUnique({
         where: { id: parentId },
-        select: { id: true, postId: true },
+        select: { id: true, postId: true, authorId: true },
       });
 
       if (!parentComment || parentComment.postId !== postId) {
@@ -332,22 +356,45 @@ export const writeCommentAction = async ({
     }
 
     // 5. Create the comment
-    const newComment = await prisma.comment.create({
-      data: {
-        content: trimmedContent,
-        postId,
-        authorId,
-        parentId: parentId || null,
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
+    const recipientId = parentId
+      ? (
+          await prisma.comment.findUnique({
+            where: { id: parentId },
+            select: { authorId: true },
+          })
+        )?.authorId
+      : postExists.authorId;
+
+    const newComment = await prisma.$transaction(async (tx) => {
+      const comment = await tx.comment.create({
+        data: {
+          content: trimmedContent,
+          postId,
+          authorId,
+          parentId: parentId || null,
+        },
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
           },
         },
-      },
+      });
+      if (recipientId && recipientId !== authorId) {
+        await tx.notificationEvent.create({
+          data: {
+            type: parentId ? "REPLY_TO_COMMENT" : "COMMENT_ON_POST",
+            actorId: authorId,
+            recipientId,
+            postId,
+            commentId: comment.id,
+          },
+        });
+      }
+      return comment;
     });
 
     // 6. Purge Next.js cache for post comments & counts
